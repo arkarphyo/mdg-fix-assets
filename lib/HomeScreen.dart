@@ -1,10 +1,6 @@
-import 'dart:convert';
-
 import 'package:easy_sidemenu/easy_sidemenu.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:data_table_2/data_table_2.dart';
-import 'package:http/http.dart' as http;
 import 'package:mdg_fixasset/Screens/DashboardScreen.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
 
@@ -66,6 +62,34 @@ class _HomeScreeState extends State<HomeScree> {
         ),
       ),
       SideMenuItem(
+        title: 'Ground Assets',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.inbox),
+      ),
+      SideMenuItem(
+        title: 'PC Name & IP',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.computer),
+      ),
+      SideMenuItem(
+        title: 'Demaged',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.delete),
+      ),
+      SideMenuItem(
+        title: 'Repire Stock',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.rebase_edit),
+      ),
+      SideMenuItem(
         title: 'Settings',
         onTap: (index, _) {
           sideMenu.changePage(index);
@@ -97,11 +121,11 @@ class _HomeScreeState extends State<HomeScree> {
                   decoration: BoxDecoration(),
                   openSideMenuWidth: 200,
                   compactSideMenuWidth: 40,
-                  hoverColor: Colors.teal,
-                  selectedColor: Colors.lightBlue,
+                  hoverColor: Colors.black26,
+                  selectedColor: Colors.black87,
                   selectedIconColor: Colors.white,
                   unselectedIconColor: Colors.black54,
-                  backgroundColor: Colors.grey,
+                  backgroundColor: Colors.white,
                   selectedTitleTextStyle: TextStyle(color: Colors.white),
                   unselectedTitleTextStyle: TextStyle(color: Colors.black54),
                   iconSize: 20,
@@ -118,7 +142,7 @@ class _HomeScreeState extends State<HomeScree> {
               // Will shows on top of all items, it can be a logo or a Title text
               title: Container(),
               // Will show on bottom of SideMenu when displayMode was SideMenuDisplayMode.open
-              footer: Text('Footer'),
+              footer: Text('Info!'),
               // Notify when display mode changed
               onDisplayModeChanged: (mode) {
                 print(mode);
