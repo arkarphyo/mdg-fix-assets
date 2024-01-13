@@ -40,6 +40,8 @@ dependencies:
   http: ^1.1.2
   dropdown_model_list: ^2.0.0
   dropdown_search: ^5.0.6
+  pluto_grid_export: ^1.0.6
+  file_saver: ^0.2.9
 
 dev_dependencies:
   flutter_test:

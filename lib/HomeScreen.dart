@@ -76,14 +76,14 @@ class _HomeScreeState extends State<HomeScree> {
         icon: Icon(Icons.computer),
       ),
       SideMenuItem(
-        title: 'Demaged',
+        title: 'Damaged',
         onTap: (index, _) {
           sideMenu.changePage(index);
         },
         icon: Icon(Icons.delete),
       ),
       SideMenuItem(
-        title: 'Repire Stock',
+        title: 'Repair',
         onTap: (index, _) {
           sideMenu.changePage(index);
         },
@@ -151,29 +151,50 @@ class _HomeScreeState extends State<HomeScree> {
               items: items,
             ),
             Expanded(
-              child: PageView(
-                controller: pageController,
+              child: Column(
                 children: [
-                  FutureBuilder<List<String>>(
-                    future: apiService.getSheet(googleSheetActiveUrl),
-                    builder: (context, AsyncSnapshot<List<String>> snapshot) {
-                      if (snapshot.hasData) {
-                        return DashboardScreen(
-                          sheetList: snapshot.data!,
-                        );
-                      } else {
-                        return Center(
-                          child: Container(
-                              height: 50,
-                              width: 50,
-                              child: const CupertinoActivityIndicator()),
-                        );
-                      }
-                    },
-                  ),
                   Container(
-                    child: Center(
-                      child: Text('Settings'),
+                    decoration: BoxDecoration(color: Colors.black),
+                    padding: EdgeInsets.all(8),
+                    height: 50,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Application Bar",
+                          style: TextStyle(color: Colors.white),
+                        )
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: PageView(
+                      controller: pageController,
+                      children: [
+                        FutureBuilder<List<String>>(
+                          future: apiService.getSheet(googleSheetActiveUrl),
+                          builder:
+                              (context, AsyncSnapshot<List<String>> snapshot) {
+                            if (snapshot.hasData) {
+                              return DashboardScreen(
+                                sheetList: snapshot.data!,
+                              );
+                            } else {
+                              return Center(
+                                child: Container(
+                                    height: 50,
+                                    width: 50,
+                                    child: const CupertinoActivityIndicator()),
+                              );
+                            }
+                          },
+                        ),
+                        Container(
+                          child: Center(
+                            child: Text('Settings'),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

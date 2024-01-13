@@ -2,11 +2,14 @@ import 'dart:convert';
 
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
 import 'package:dropdown_model_list/dropdown_model_list.dart';
 import 'package:mdg_fixasset/Utils/UtilService.dart';
+import 'package:pluto_grid/pluto_grid.dart' as pluto_grid_export;
 import 'package:pluto_grid/pluto_grid.dart';
+import 'package:file_saver/file_saver.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.sheetList});
@@ -19,8 +22,12 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   ApiService apiService = ApiService();
   UtilService utilService = UtilService();
+  late PlutoGridStateManager stateManager;
 
   String processInfo = "";
+  String selectedLocation = "";
+  String selectedDepartment = "";
+  String selectedPosition = "";
 
   List<Map<String, dynamic>> cellsList = [];
 
@@ -84,6 +91,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .getHeader(
             "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=optional")
         .then((optionalItems) {
+      if (selector != "Location") {
+        optionaList.add('Select All');
+      }
       optionalItems.forEach((item) {
         if (item["$selector"].isNotEmpty) {
           setState(() {
@@ -111,21 +121,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return headerList;
   }
 
-  Future<List<Map<String, dynamic>>> getCellValues(String sheetName) async {
+  Future<List<Map<String, dynamic>>> getCellValues(String sheetName,
+      {String filterColumn = "", String filterValue = ""}) async {
     await apiService
         .fetchData(
             "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=$sheetName")
         .then((cells) {
       cellsList.clear();
-      cells.forEach((cell) {
-        var cellData = cell;
-        setState(() {
-          cellsList.add(cellData);
+      if (filterColumn.isNotEmpty && filterValue != 'Select All') {
+        cells.forEach((cells) {
+          var cellData = cells;
+          if (cells[filterColumn] == filterValue) {
+            print("${cells[filterColumn] == filterValue}");
+            setState(() {
+              cellsList.add(cellData);
+            });
+          }
         });
-      });
+      } else {
+        cells.forEach((cells) {
+          var cellData = cells;
+          setState(() {
+            cellsList.add(cellData);
+          });
+        });
+      }
     });
 
     return cellsList;
+  }
+
+  Future<List<Map<String, dynamic>>> getFilterCells(String filterColum,
+      String filterValue, List<Map<String, dynamic>> dataList) async {
+    List<Map<String, dynamic>> responseDataList = [];
+    dataList.forEach((data) {
+      Map<String, dynamic> cellData = {};
+
+      cellData = dataList.firstWhere((cells) {
+        if (cells[filterColum] == filterValue) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+      responseDataList.add(cellData);
+    });
+    return responseDataList;
   }
 
   List<String> getFilterValue(String headerName, String responseValue) {
@@ -151,6 +192,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return itemList;
   }
 
+  void exportToCsv() async {
+    String title = "pluto_grid_export";
+
+    // use file_saver from pub.dev
+    await FileSaver.instance.saveFile(name: '$title.csv');
+  }
+
   @override
   void initState() {
     initBuildTable().then((value) {
@@ -171,24 +219,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Padding(
             padding: const EdgeInsets.all(4.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                //Choose Location
                 CustomDropdownSearch(
                   width: 6,
-                  lable: "Choose Sheet",
-                  itemList: sheetList,
+                  lable: "Choose Location",
+                  itemList: locationList,
                   onChange: (selectedItem) {
-                    print("Selected Item : $selectedItem");
+                    print("Location Item : $selectedItem");
+                    setState(() {
+                      selectedLocation = selectedItem!;
+                    });
                     setState(() {
                       processInfo = "Processing...";
                     });
-                    getCellValues(selectedItem!).then(
+                    getCellValues(selectedLocation!).then(
                       (cells) {
-                        getHeaderValues(selectedItem!).then((headers) {
+                        getHeaderValues(selectedLocation!).then((headers) {
                           setState(() {
                             print(
-                                "SHEET : ${selectedItem}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
                           });
                         });
                       },
@@ -196,30 +248,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
 
-                CustomDropdownSearch(
-                  width: 6,
-                  lable: "Choose Location",
-                  itemList: locationList,
-                  onChange: (selectedItem) {
-                    print("Location Item : $selectedItem");
-                  },
-                ),
+                //Choose Department
                 CustomDropdownSearch(
                   width: 6,
                   lable: "Choose Department",
                   itemList: departmentList,
                   onChange: (selectedItem) {
                     print("Department Item : $selectedItem");
+
+                    setState(() {
+                      processInfo = "Processing...";
+                      selectedDepartment = selectedItem!;
+                    });
+                    getCellValues(selectedLocation,
+                            filterColumn: "Department",
+                            filterValue: selectedDepartment)
+                        .then(
+                      (updateCell) {
+                        getHeaderValues(selectedLocation!).then((headers) {
+                          setState(() {
+                            print(
+                                "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${updateCell.length}, Department Count : ${departmentList.length}");
+                            if (updateCell.length == 0) {
+                              processInfo = "Not Found";
+                            }
+                          });
+                        });
+                      },
+                    );
                   },
                 ),
-                CustomDropdownSearch(
-                  width: 6,
-                  lable: "Choose Position",
-                  itemList: positionList,
-                  onChange: (selectedItem) {
-                    print("Postion Item : $selectedItem");
-                  },
-                ),
+
+                ElevatedButton(
+                    onPressed: exportToCsv,
+                    child: const Text("UTF-8 CSV compatible with MS Excel")),
+
+                // //Choose Position
+                // CustomDropdownSearch(
+                //   width: 6,
+                //   lable: "Choose Position",
+                //   itemList: positionList,
+                //   onChange: (selectedItem) {
+                //     print("Postion Item : $selectedItem");
+                //     setState(() {
+                //       selectedPosition = selectedItem!;
+                //     });
+                //   },
+                // ),
 
                 ///Search DropDown
                 // Container(
@@ -292,6 +367,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           width: MediaQuery.of(context).size.width / 1.2,
                           height: MediaQuery.of(context).size.height / 1.2,
                           child: PlutoGrid(
+                              onLoaded: (event) {
+                                event.stateManager.setShowColumnFilter(true);
+                                stateManager = event.stateManager;
+                              },
+                              onChanged: (PlutoGridOnChangedEvent event) {
+                                print(event);
+                              },
+                              createHeader: (stateManager) {
+                                stateManager.setFilter((element) => true);
+                                return Container(
+                                  width: 100,
+                                  child: TextField(),
+                                );
+                              },
+                              createFooter: ((stateManager) {
+                                stateManager.setPageSize(50, notify: false);
+                                return PlutoPagination(stateManager);
+                              }),
+                              configuration: const PlutoGridConfiguration(
+                                scrollbar: PlutoGridScrollbarConfig(
+                                  dragDevices: // In case of Mobile
+                                      // {
+                                      //   PointerDeviceKind.touch,
+                                      //   PointerDeviceKind.stylus,
+                                      //   PointerDeviceKind.invertedStylus,
+                                      //   PointerDeviceKind.unknown,
+                                      // }
+
+                                      // In case of desktop
+                                      {
+                                    PointerDeviceKind.mouse,
+                                    PointerDeviceKind.trackpad,
+                                    PointerDeviceKind.unknown,
+                                  },
+                                ),
+                              ),
                               columns: List<PlutoColumn>.generate(
                                   headerList.length, (index) {
                                 if (headerList[index] == "No.") {
@@ -333,10 +444,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 )
               : Container(
                   width: MediaQuery.of(context).size.width / 1.2,
-                  height: MediaQuery.of(context).size.height / 1.2,
+                  height: MediaQuery.of(context).size.height / 1.4,
                   child: Center(
                     child: LoadingWidget(
                       title: "$processInfo",
+                      color: processInfo == "Processing..."
+                          ? Colors.green
+                          : Colors.red,
                     ),
                   ),
                 )
@@ -349,13 +463,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+//LOADING WIDGET
 class LoadingWidget extends StatelessWidget {
   const LoadingWidget({
     super.key,
     this.title = "LOADING...",
+    this.color,
   });
 
   final String title;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -366,7 +483,9 @@ class LoadingWidget extends StatelessWidget {
           Container(
               height: 1,
               width: MediaQuery.of(context).size.width / 4,
-              child: LinearProgressIndicator()),
+              child: LinearProgressIndicator(
+                color: color,
+              )),
         ],
       ),
     );

@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      //scrollBehavior: MyCustomScrollBehavior(),
+      scrollBehavior: MyCustomScrollBehavior(),
       title: 'MDG Fix Assets',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
