@@ -4,12 +4,14 @@ import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
-import 'package:dropdown_model_list/dropdown_model_list.dart';
-import 'package:mdg_fixasset/Utils/UtilService.dart';
-import 'package:pluto_grid/pluto_grid.dart' as pluto_grid_export;
-import 'package:pluto_grid/pluto_grid.dart';
 import 'package:file_saver/file_saver.dart';
+import 'package:mdg_fixasset/Utils/UtilService.dart';
+import 'package:mdg_fixasset/WIdgets/CustomAlertDialog.dart';
+import 'package:mdg_fixasset/constant.dart';
+import 'package:pluto_grid_export/pluto_grid_export.dart' as pluto_grid_export;
+import 'package:pluto_grid/pluto_grid.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.sheetList});
@@ -29,7 +31,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String selectedDepartment = "";
   String selectedPosition = "";
 
+  bool isLoading = false;
+
   List<Map<String, dynamic>> cellsList = [];
+  List<Map<String, dynamic>> showHideHeaderList = [];
 
   List<String> headerList = [];
   List<String> sheetList = [];
@@ -60,7 +65,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         positionList = position;
       });
     });
-    processInfo = "First you need to selected a Sheet!";
+    processInfo = "Firstly you need to selected a branch location!";
     // await apiService
     //     .fetchData(
     //         "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=Tamwe Office  PC List")
@@ -192,11 +197,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return itemList;
   }
 
+  void exportToPdf() async {
+    var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
+      title: "$selectedLocation",
+      creator: "MDG-!T",
+      format: pluto_grid_export.PdfPageFormat.a4.landscape,
+    );
+
+    await pluto_grid_export.Printing.sharePdf(
+      bytes: await plutoGridPdfExport.export(stateManager),
+      filename: plutoGridPdfExport.getFilename(),
+    );
+  }
+
   void exportToCsv() async {
     String title = "pluto_grid_export";
 
+    var exported = const Utf8Encoder()
+        .convert(pluto_grid_export.PlutoGridExport.exportCSV(stateManager));
+    DateTime now = DateTime.now();
+    String dateTimeFormat = DateFormat('dd-MM-yyyy_hh:mm').format(now);
     // use file_saver from pub.dev
-    await FileSaver.instance.saveFile(name: '$title.csv');
+    await FileSaver.instance.saveFile(
+        name: "${title}_$dateTimeFormat", ext: "csv", bytes: exported);
   }
 
   @override
@@ -238,7 +261,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     getCellValues(selectedLocation!).then(
                       (cells) {
                         getHeaderValues(selectedLocation!).then((headers) {
+                          headerList.forEach((header) {
+                            showHideHeaderList.add({header: true});
+                          });
                           setState(() {
+                            print(showHideHeaderList[0]);
                             print(
                                 "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
                           });
@@ -278,10 +305,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   },
                 ),
-
-                ElevatedButton(
-                    onPressed: exportToCsv,
-                    child: const Text("UTF-8 CSV compatible with MS Excel")),
 
                 // //Choose Position
                 // CustomDropdownSearch(
@@ -327,7 +350,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 //     },
                 //   ),
                 // ),
-
                 // Visibility(
                 //   visible: showDepartmentDropDown,
                 //   child: Container(
@@ -367,91 +389,191 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           width: MediaQuery.of(context).size.width / 1.2,
                           height: MediaQuery.of(context).size.height / 1.2,
                           child: PlutoGrid(
-                              onLoaded: (event) {
-                                event.stateManager.setShowColumnFilter(true);
-                                stateManager = event.stateManager;
-                              },
-                              onChanged: (PlutoGridOnChangedEvent event) {
-                                print(event);
-                              },
-                              createHeader: (stateManager) {
-                                stateManager.setFilter((element) => true);
-                                return Container(
-                                  width: 100,
-                                  child: TextField(),
-                                );
-                              },
-                              createFooter: ((stateManager) {
-                                stateManager.setPageSize(50, notify: false);
-                                return PlutoPagination(stateManager);
-                              }),
-                              configuration: const PlutoGridConfiguration(
-                                scrollbar: PlutoGridScrollbarConfig(
-                                  dragDevices: // In case of Mobile
-                                      // {
-                                      //   PointerDeviceKind.touch,
-                                      //   PointerDeviceKind.stylus,
-                                      //   PointerDeviceKind.invertedStylus,
-                                      //   PointerDeviceKind.unknown,
-                                      // }
-
-                                      // In case of desktop
-                                      {
-                                    PointerDeviceKind.mouse,
-                                    PointerDeviceKind.trackpad,
-                                    PointerDeviceKind.unknown,
-                                  },
+                            onLoaded: (event) {
+                              event.stateManager.setShowColumnFilter(true);
+                              stateManager = event.stateManager;
+                            },
+                            onChanged: (PlutoGridOnChangedEvent event) {
+                              print(event);
+                            },
+                            createHeader: (stateManager) {
+                              stateManager.setFilter((element) => true);
+                              return Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.filter_list_alt),
+                                      onPressed: () {
+                                        showModal(context, Builder(
+                                          builder: (context) {
+                                            return Expanded(
+                                              child: Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width /
+                                                    3,
+                                                child: StatefulBuilder(builder:
+                                                    (context, onState) {
+                                                  bool checkState = false;
+                                                  return ListView.builder(
+                                                    itemCount:
+                                                        headerList.length,
+                                                    itemBuilder:
+                                                        (context, index) {
+                                                      return ListTile(
+                                                        title: Text(
+                                                            headerList[index]),
+                                                        leading: Checkbox(
+                                                            value:
+                                                                showHideHeaderList[
+                                                                        index][
+                                                                    headerList[
+                                                                        index]],
+                                                            onChanged:
+                                                                (status) {
+                                                              onState(() {
+                                                                showHideHeaderList[
+                                                                        index][
+                                                                    headerList[
+                                                                        index]] = status!;
+                                                                print(
+                                                                    "${headerList[index]} : ${showHideHeaderList[index][headerList[index]]}");
+                                                              });
+                                                            }),
+                                                      );
+                                                    },
+                                                  );
+                                                }),
+                                              ),
+                                            );
+                                          },
+                                        ), title: "Filter Columns", actions: [
+                                          IconButton(
+                                              onPressed: () {},
+                                              icon: Icon(Icons.done))
+                                        ]);
+                                      },
+                                    ),
+                                    MaterialButton(
+                                        color: Colors.black87,
+                                        onPressed: exportToCsv,
+                                        child: const Text(
+                                          "Export Excel",
+                                          style: TextStyle(color: Colors.white),
+                                        )),
+                                  ],
                                 ),
+                              );
+                            },
+                            createFooter: ((stateManager) {
+                              stateManager.setPageSize(50, notify: false);
+                              return PlutoPagination(stateManager);
+                            }),
+                            configuration: const PlutoGridConfiguration(
+                              scrollbar: PlutoGridScrollbarConfig(
+                                dragDevices: // In case of Mobile
+                                    // {
+                                    //   PointerDeviceKind.touch,
+                                    //   PointerDeviceKind.stylus,
+                                    //   PointerDeviceKind.invertedStylus,
+                                    //   PointerDeviceKind.unknown,
+                                    // }
+
+                                    // In case of desktop
+                                    {
+                                  PointerDeviceKind.mouse,
+                                  PointerDeviceKind.trackpad,
+                                  PointerDeviceKind.unknown,
+                                },
                               ),
-                              columns: List<PlutoColumn>.generate(
-                                  headerList.length, (index) {
-                                if (headerList[index] == "No.") {
-                                  return PlutoColumn(
-                                      width: 50,
-                                      minWidth: 45,
-                                      backgroundColor: Colors.black54,
-                                      textAlign: PlutoColumnTextAlign.center,
-                                      title: headerList[index],
-                                      field: headerList[index],
-                                      type: PlutoColumnType.text());
+                            ),
+                            columns: List<PlutoColumn>.generate(
+                                headerList.length, (index) {
+                              if (headerList[index] == "No.") {
+                                return PlutoColumn(
+                                    width: 50,
+                                    minWidth: 45,
+                                    backgroundColor: Colors.black12,
+                                    textAlign: PlutoColumnTextAlign.center,
+                                    title: headerList[index],
+                                    field: headerList[index],
+                                    hide: showHideHeaderList[index]
+                                        [headerList[index]],
+                                    type: PlutoColumnType.text());
+                              } else {
+                                return PlutoColumn(
+                                    backgroundColor: Colors.black12,
+                                    textAlign: PlutoColumnTextAlign.center,
+                                    title: headerList[index],
+                                    field: headerList[index],
+                                    type: PlutoColumnType.text());
+                              }
+                            }),
+                            rows: List<PlutoRow>.generate(cellsList.length,
+                                (index) {
+                              Map<String, PlutoCell> cells = {};
+                              headerList.forEach((header) {
+                                if (header == "No.") {
+                                  cells[header] = PlutoCell(value: index + 1);
                                 } else {
-                                  return PlutoColumn(
-                                      backgroundColor: Colors.black54,
-                                      textAlign: PlutoColumnTextAlign.center,
-                                      title: headerList[index],
-                                      field: headerList[index],
-                                      type: PlutoColumnType.text());
+                                  cells[header] = PlutoCell(
+                                      value: cellsList[index][header]);
                                 }
-                              }),
-                              rows: List<PlutoRow>.generate(cellsList.length,
-                                  (index) {
-                                Map<String, PlutoCell> cells = {};
-                                headerList.forEach((header) {
-                                  if (header == "No.") {
-                                    cells[header] = PlutoCell(value: index + 1);
-                                  } else {
-                                    cells[header] = PlutoCell(
-                                        value: cellsList[index][header]);
-                                  }
-                                });
-                                PlutoRow row = PlutoRow(cells: cells);
-                                return row;
-                              })),
+                              });
+                              PlutoRow row = PlutoRow(cells: cells);
+
+                              return row;
+                            }),
+                          ),
                         )
                       ],
                     ),
                   ),
                 )
-              : Container(
-                  width: MediaQuery.of(context).size.width / 1.2,
-                  height: MediaQuery.of(context).size.height / 1.4,
-                  child: Center(
-                    child: LoadingWidget(
-                      title: "$processInfo",
-                      color: processInfo == "Processing..."
-                          ? Colors.green
-                          : Colors.red,
-                    ),
+              : Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Center(
+                            child: LoadingWidget(
+                              title: "$processInfo",
+                              color: processInfo == "Processing..."
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+                          processInfo == "Processing..."
+                              ? Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Container(
+                                    width: 25,
+                                    height: 25,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.black45,
+                                      strokeWidth: 1,
+                                    ),
+                                  ),
+                                )
+                              : Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Icon(
+                                    Icons.info_outline,
+                                    color: Colors.red,
+                                    size: 24,
+                                  ),
+                                ),
+                        ],
+                      ),
+                    ],
                   ),
                 )
         ],
@@ -482,7 +604,7 @@ class LoadingWidget extends StatelessWidget {
           Text("$title"),
           Container(
               height: 1,
-              width: MediaQuery.of(context).size.width / 4,
+              width: MediaQuery.of(context).size.width / 6,
               child: LinearProgressIndicator(
                 color: color,
               )),
