@@ -451,7 +451,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           },
                                         ), title: "Filter Columns", actions: [
                                           IconButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                setState(() {
+                                                  showHideHeaderList;
+                                                });
+                                                Navigator.of(context).pop();
+                                              },
                                               icon: Icon(Icons.done))
                                         ]);
                                       },
