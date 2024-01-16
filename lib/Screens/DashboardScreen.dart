@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
@@ -47,6 +48,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<String> positionList = [];
   List<String> locationList = [];
 
+  List<PlutoColumn> setColum() {
+    return List<PlutoColumn>.generate(headerList.length, (index) {
+      if (headerList[index] == "No.") {
+        return PlutoColumn(
+            width: 50,
+            minWidth: 45,
+            backgroundColor: Colors.black12,
+            textAlign: PlutoColumnTextAlign.center,
+            title: headerList[index],
+            field: headerList[index],
+            hide: !showHideHeaderList[index][headerList[index]],
+            type: PlutoColumnType.text());
+      } else {
+        return PlutoColumn(
+            backgroundColor: Colors.black12,
+            textAlign: PlutoColumnTextAlign.center,
+            title: headerList[index],
+            field: headerList[index],
+            hide: !showHideHeaderList[index][headerList[index]],
+            type: PlutoColumnType.text());
+      }
+    });
+  }
+
   //INITIALIZE BUILD
   Future<void> initBuildTable() async {
     getOptionalValue("Department").then((department) {
@@ -59,13 +84,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         locationList = location;
       });
     });
-
     getOptionalValue("Position").then((position) {
       setState(() {
         positionList = position;
       });
     });
-    processInfo = "Firstly you need to selected a branch location!";
+    processInfo = "Initialize processing...";
     // await apiService
     //     .fetchData(
     //         "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=Tamwe Office  PC List")
@@ -226,7 +250,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     initBuildTable().then((value) {
       setState(() {
+        selectedLocation = "HO";
         sheetList = widget.sheetList;
+        getCellValues(selectedLocation!).then(
+          (cells) {
+            getHeaderValues(selectedLocation!).then((headers) {
+              headerList.forEach((header) {
+                showHideHeaderList.add({header: true});
+              });
+              setState(() {
+                print(showHideHeaderList[0]);
+                print(
+                    "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+              });
+            });
+          },
+        );
       });
     });
 
@@ -236,143 +275,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (sheetList.length > 0) {
+    if (sheetList.length > 0 && positionList.length > 0) {
       return Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                //Choose Location
-                CustomDropdownSearch(
-                  width: 6,
-                  lable: "Choose Location",
-                  itemList: locationList,
-                  onChange: (selectedItem) {
-                    print("Location Item : $selectedItem");
-                    setState(() {
-                      selectedLocation = selectedItem!;
-                    });
-                    setState(() {
-                      processInfo = "Processing...";
-                    });
-                    getCellValues(selectedLocation!).then(
-                      (cells) {
-                        getHeaderValues(selectedLocation!).then((headers) {
-                          headerList.forEach((header) {
-                            showHideHeaderList.add({header: true});
-                          });
-                          setState(() {
-                            print(showHideHeaderList[0]);
-                            print(
-                                "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
-                          });
-                        });
-                      },
-                    );
-                  },
-                ),
-
-                //Choose Department
-                CustomDropdownSearch(
-                  width: 6,
-                  lable: "Choose Department",
-                  itemList: departmentList,
-                  onChange: (selectedItem) {
-                    print("Department Item : $selectedItem");
-
-                    setState(() {
-                      processInfo = "Processing...";
-                      selectedDepartment = selectedItem!;
-                    });
-                    getCellValues(selectedLocation,
-                            filterColumn: "Department",
-                            filterValue: selectedDepartment)
-                        .then(
-                      (updateCell) {
-                        getHeaderValues(selectedLocation!).then((headers) {
-                          setState(() {
-                            print(
-                                "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${updateCell.length}, Department Count : ${departmentList.length}");
-                            if (updateCell.length == 0) {
-                              processInfo = "Not Found";
-                            }
-                          });
-                        });
-                      },
-                    );
-                  },
-                ),
-
-                // //Choose Position
-                // CustomDropdownSearch(
-                //   width: 6,
-                //   lable: "Choose Position",
-                //   itemList: positionList,
-                //   onChange: (selectedItem) {
-                //     print("Postion Item : $selectedItem");
-                //     setState(() {
-                //       selectedPosition = selectedItem!;
-                //     });
-                //   },
-                // ),
-
-                ///Search DropDown
-                // Container(
-                //   width: MediaQuery.of(context).size.width / 4,
-                //   child: SearchDropList(
-                //     itemSelected: selectedSheet,
-                //     dropListModel: sheetListModel,
-                //     showIcon: true,
-                //     showArrowIcon: true,
-                //     showBorder: true,
-                //     textEditingController: sheetDropdownSearchController,
-                //     paddingTop: 0,
-                //     suffixIcon: Icons.arrow_drop_down,
-                //     containerPadding: const EdgeInsets.all(10),
-                //     icon: const Icon(Icons.groups_2_rounded, color: Colors.black),
-                //     onOptionSelected: (optionItem) {
-                //       selectedSheet = optionItem;
-                //       getHeaderValues(selectedSheet.title).then((headers) {
-                //         setState(() {
-                //           departmentList = getFilterValue(headers[2], headers[2]);
-                //           setOptionItem(departmentList, departmentOptionItemList);
-                //           showDepartmentDropDown = true;
-                //           departmentListModel =
-                //               DropListModel(departmentOptionItemList);
-
-                //           print(
-                //               "SHEET : ${selectedSheet.title}, FILTER : ${headers[2]}, Department Count : ${departmentListModel.listOptionItems.length}");
-                //         });
-                //       });
-                //     },
-                //   ),
-                // ),
-                // Visibility(
-                //   visible: showDepartmentDropDown,
-                //   child: Container(
-                //     width: MediaQuery.of(context).size.width / 4,
-                //     child: SearchDropList(
-                //       itemSelected: selectedDepartment,
-                //       dropListModel: departmentListModel,
-                //       showIcon: true,
-                //       showArrowIcon: true,
-                //       showBorder: true,
-                //       textEditingController: departmentDropdownSearchController,
-                //       paddingTop: 0,
-                //       suffixIcon: Icons.arrow_drop_down,
-                //       containerPadding: const EdgeInsets.all(10),
-                //       icon:
-                //           const Icon(Icons.groups_2_rounded, color: Colors.black),
-                //       onOptionSelected: (optionItem) {},
-                //     ),
-                //   ),
-                // ),
-              ],
-            ),
-          ),
           cellsList.length > 0 && headerList.length > 0
               ? Expanded(
                   child: SingleChildScrollView(
@@ -380,11 +285,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      children:
-                          //     List.generate(headerList.length, (index) {
-                          //   return Text(headerList[index]);
-                          // })
-                          [
+                      children: [
                         Container(
                           width: MediaQuery.of(context).size.width / 1.2,
                           height: MediaQuery.of(context).size.height / 1.2,
@@ -403,6 +304,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
+                                    //Choose Location
+                                    CustomDropdownSearch(
+                                      width: 6,
+                                      lable: selectedLocation,
+                                      itemList: locationList,
+                                      onChange: (selectedItem) {
+                                        print("Location Item : $selectedItem");
+                                        setState(() {
+                                          if (selectedLocation.isNotEmpty) {
+                                            stateManager.setShowLoading(true);
+                                          }
+                                          selectedLocation = selectedItem!;
+                                          processInfo = "Processing...";
+                                        });
+                                        getCellValues(selectedLocation!).then(
+                                          (cells) {
+                                            getHeaderValues(selectedLocation!)
+                                                .then((headers) {
+                                              headerList.forEach((header) {
+                                                showHideHeaderList
+                                                    .add({header: true});
+                                              });
+                                              setState(() {
+                                                if (selectedLocation
+                                                    .isNotEmpty) {
+                                                  stateManager
+                                                      .setShowLoading(false);
+                                                }
+
+                                                print(showHideHeaderList[0]);
+                                                print(
+                                                    "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                              });
+                                            });
+                                          },
+                                        );
+                                      },
+                                    ),
+
+                                    //Choose Department
+                                    CustomDropdownSearch(
+                                      width: 6,
+                                      lable: "Choose Department",
+                                      itemList: departmentList,
+                                      onChange: (selectedItem) {
+                                        print(
+                                            "Department Item : $selectedItem");
+
+                                        setState(() {
+                                          stateManager.setShowLoading(true);
+                                          processInfo = "Processing...";
+                                          selectedDepartment = selectedItem!;
+                                        });
+                                        getCellValues(selectedLocation,
+                                                filterColumn: "Department",
+                                                filterValue: selectedDepartment)
+                                            .then(
+                                          (updateCell) {
+                                            getHeaderValues(selectedLocation!)
+                                                .then((headers) {
+                                              setState(() {
+                                                stateManager
+                                                    .setShowLoading(false);
+                                                print(
+                                                    "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${updateCell.length}, Department Count : ${departmentList.length}");
+                                                if (updateCell.length == 0) {
+                                                  processInfo = "Not Found";
+                                                }
+                                              });
+                                            });
+                                          },
+                                        );
+                                      },
+                                    ),
                                     IconButton(
                                       icon: Icon(Icons.filter_list_alt),
                                       onPressed: () {
@@ -438,6 +413,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                                         index][
                                                                     headerList[
                                                                         index]] = status!;
+
                                                                 print(
                                                                     "${headerList[index]} : ${showHideHeaderList[index][headerList[index]]}");
                                                               });
@@ -453,7 +429,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           IconButton(
                                               onPressed: () {
                                                 setState(() {
-                                                  showHideHeaderList;
+                                                  getCellValues(
+                                                          selectedLocation!)
+                                                      .then(
+                                                    (cells) {
+                                                      getHeaderValues(
+                                                              selectedLocation!)
+                                                          .then((headers) {
+                                                        headerList
+                                                            .forEach((header) {
+                                                          showHideHeaderList
+                                                              .add({
+                                                            header: true
+                                                          });
+                                                        });
+                                                        setState(() {
+                                                          print(
+                                                              showHideHeaderList[
+                                                                  0]);
+                                                          print(
+                                                              "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                                        });
+                                                      });
+                                                    },
+                                                  );
                                                 });
                                                 Navigator.of(context).pop();
                                               },
@@ -494,28 +493,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 },
                               ),
                             ),
-                            columns: List<PlutoColumn>.generate(
-                                headerList.length, (index) {
-                              if (headerList[index] == "No.") {
-                                return PlutoColumn(
-                                    width: 50,
-                                    minWidth: 45,
-                                    backgroundColor: Colors.black12,
-                                    textAlign: PlutoColumnTextAlign.center,
-                                    title: headerList[index],
-                                    field: headerList[index],
-                                    hide: showHideHeaderList[index]
-                                        [headerList[index]],
-                                    type: PlutoColumnType.text());
-                              } else {
-                                return PlutoColumn(
-                                    backgroundColor: Colors.black12,
-                                    textAlign: PlutoColumnTextAlign.center,
-                                    title: headerList[index],
-                                    field: headerList[index],
-                                    type: PlutoColumnType.text());
-                              }
-                            }),
+                            columns: setColum(),
                             rows: List<PlutoRow>.generate(cellsList.length,
                                 (index) {
                               Map<String, PlutoCell> cells = {};
