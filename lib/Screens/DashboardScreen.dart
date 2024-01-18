@@ -47,6 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<String> departmentList = [];
   List<String> positionList = [];
   List<String> locationList = [];
+  int sheetRowCount = 0;
 
   List<PlutoColumn> setColum() {
     return List<PlutoColumn>.generate(headerList.length, (index) {
@@ -156,6 +157,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .fetchData(
             "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=$sheetName")
         .then((cells) {
+      sheetRowCount = cells.length;
       cellsList.clear();
       if (filterColumn.isNotEmpty && filterValue != 'Select All') {
         cells.forEach((cells) {
@@ -219,6 +221,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
     });
     return itemList;
+  }
+
+  void openDetail(PlutoRow? row) async {
+    String? value = await showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          final textController = TextEditingController();
+          return Dialog(
+            child: LayoutBuilder(
+              builder: (ctx, size) {
+                return Container(
+                  padding: const EdgeInsets.all(15),
+                  width: 400,
+                  height: MediaQuery.of(context).size.height / 1.1,
+                  decoration:
+                      BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        ...row!.cells.entries.map((e) {
+                          if (e.value.column != "" &&
+                              e.value.column.title != "No.") {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: TextField(
+                                controller: TextEditingController(),
+                                decoration: InputDecoration(
+                                  hintText: e.value.column.title,
+                                ),
+                              ),
+                            );
+                          } else {
+                            return Text(
+                                'ID : ${e.value.value} Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
+                          }
+                        }).toList(),
+                        const SizedBox(height: 20),
+                        Center(
+                          child: Wrap(
+                            spacing: 10,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx, null);
+                                },
+                                child: const Text('Cancel.'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx, textController.text);
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                    Colors.blue,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Update.',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        });
+
+    if (value == null || value.isEmpty) {
+      return;
+    }
+
+    stateManager.changeCellValue(
+      stateManager.currentRow!.cells['No.']!,
+      value,
+      force: true,
+    );
   }
 
   void exportToPdf() async {
@@ -287,186 +377,234 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
-                          width: MediaQuery.of(context).size.width / 1.2,
+                          width: MediaQuery.of(context).size.width / 1.1,
                           height: MediaQuery.of(context).size.height / 1.2,
                           child: PlutoGrid(
                             onLoaded: (event) {
                               event.stateManager.setShowColumnFilter(true);
                               stateManager = event.stateManager;
+                              stateManager.setSelectingMode(
+                                  PlutoGridSelectingMode.none);
                             },
                             onChanged: (PlutoGridOnChangedEvent event) {
                               print(event);
+                            },
+                            onSelected: (PlutoGridOnSelectedEvent event) {
+                              if (event.row != null) {
+                                openDetail(event.row);
+                              }
                             },
                             createHeader: (stateManager) {
                               stateManager.setFilter((element) => true);
                               return Padding(
                                 padding: const EdgeInsets.all(4),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    //Choose Location
-                                    CustomDropdownSearch(
-                                      width: 6,
-                                      lable: selectedLocation,
-                                      itemList: locationList,
-                                      onChange: (selectedItem) {
-                                        print("Location Item : $selectedItem");
-                                        setState(() {
-                                          if (selectedLocation.isNotEmpty) {
-                                            stateManager.setShowLoading(true);
-                                          }
-                                          selectedLocation = selectedItem!;
-                                          processInfo = "Processing...";
-                                        });
-                                        getCellValues(selectedLocation!).then(
-                                          (cells) {
-                                            getHeaderValues(selectedLocation!)
-                                                .then((headers) {
-                                              headerList.forEach((header) {
-                                                showHideHeaderList
-                                                    .add({header: true});
-                                              });
+                                    Container(
+                                      child:
+                                          Text("Total Rows : $sheetRowCount"),
+                                    ),
+                                    Container(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          //Choose Location
+                                          CustomDropdownSearch(
+                                            width: 6,
+                                            lable: selectedLocation,
+                                            itemList: locationList,
+                                            onChange: (selectedItem) {
+                                              print(
+                                                  "Location Item : $selectedItem");
                                               setState(() {
                                                 if (selectedLocation
                                                     .isNotEmpty) {
                                                   stateManager
-                                                      .setShowLoading(false);
+                                                      .setShowLoading(true);
                                                 }
-
-                                                print(showHideHeaderList[0]);
-                                                print(
-                                                    "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                                selectedLocation =
+                                                    selectedItem!;
+                                                processInfo = "Processing...";
                                               });
-                                            });
-                                          },
-                                        );
-                                      },
-                                    ),
+                                              getCellValues(selectedLocation!)
+                                                  .then(
+                                                (cells) {
+                                                  getHeaderValues(
+                                                          selectedLocation!)
+                                                      .then((headers) {
+                                                    headerList
+                                                        .forEach((header) {
+                                                      showHideHeaderList
+                                                          .add({header: true});
+                                                    });
+                                                    setState(() {
+                                                      if (selectedLocation
+                                                          .isNotEmpty) {
+                                                        stateManager
+                                                            .setShowLoading(
+                                                                false);
+                                                      }
 
-                                    //Choose Department
-                                    CustomDropdownSearch(
-                                      width: 6,
-                                      lable: "Choose Department",
-                                      itemList: departmentList,
-                                      onChange: (selectedItem) {
-                                        print(
-                                            "Department Item : $selectedItem");
+                                                      print(showHideHeaderList[
+                                                          0]);
+                                                      print(
+                                                          "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                                    });
+                                                  });
+                                                },
+                                              );
+                                            },
+                                          ),
 
-                                        setState(() {
-                                          stateManager.setShowLoading(true);
-                                          processInfo = "Processing...";
-                                          selectedDepartment = selectedItem!;
-                                        });
-                                        getCellValues(selectedLocation,
-                                                filterColumn: "Department",
-                                                filterValue: selectedDepartment)
-                                            .then(
-                                          (updateCell) {
-                                            getHeaderValues(selectedLocation!)
-                                                .then((headers) {
+                                          //Choose Department
+                                          CustomDropdownSearch(
+                                            width: 6,
+                                            lable: "Choose Department",
+                                            itemList: departmentList,
+                                            onChange: (selectedItem) {
+                                              print(
+                                                  "Department Item : $selectedItem");
+
                                               setState(() {
                                                 stateManager
-                                                    .setShowLoading(false);
-                                                print(
-                                                    "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${updateCell.length}, Department Count : ${departmentList.length}");
-                                                if (updateCell.length == 0) {
-                                                  processInfo = "Not Found";
-                                                }
+                                                    .setShowLoading(true);
+                                                processInfo = "Processing...";
+                                                selectedDepartment =
+                                                    selectedItem!;
                                               });
-                                            });
-                                          },
-                                        );
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.filter_list_alt),
-                                      onPressed: () {
-                                        showModal(context, Builder(
-                                          builder: (context) {
-                                            return Expanded(
-                                              child: Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width /
-                                                    3,
-                                                child: StatefulBuilder(builder:
-                                                    (context, onState) {
-                                                  bool checkState = false;
-                                                  return ListView.builder(
-                                                    itemCount:
-                                                        headerList.length,
-                                                    itemBuilder:
-                                                        (context, index) {
-                                                      return ListTile(
-                                                        title: Text(
-                                                            headerList[index]),
-                                                        leading: Checkbox(
-                                                            value:
-                                                                showHideHeaderList[
-                                                                        index][
-                                                                    headerList[
-                                                                        index]],
-                                                            onChanged:
-                                                                (status) {
-                                                              onState(() {
-                                                                showHideHeaderList[
-                                                                        index][
-                                                                    headerList[
-                                                                        index]] = status!;
-
-                                                                print(
-                                                                    "${headerList[index]} : ${showHideHeaderList[index][headerList[index]]}");
-                                                              });
-                                                            }),
-                                                      );
-                                                    },
-                                                  );
-                                                }),
-                                              ),
-                                            );
-                                          },
-                                        ), title: "Filter Columns", actions: [
-                                          IconButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  getCellValues(
+                                              getCellValues(selectedLocation,
+                                                      filterColumn:
+                                                          "Department",
+                                                      filterValue:
+                                                          selectedDepartment)
+                                                  .then(
+                                                (updateCell) {
+                                                  getHeaderValues(
                                                           selectedLocation!)
-                                                      .then(
-                                                    (cells) {
-                                                      getHeaderValues(
-                                                              selectedLocation!)
-                                                          .then((headers) {
-                                                        headerList
-                                                            .forEach((header) {
-                                                          showHideHeaderList
-                                                              .add({
-                                                            header: true
-                                                          });
-                                                        });
-                                                        setState(() {
-                                                          print(
-                                                              showHideHeaderList[
-                                                                  0]);
-                                                          print(
-                                                              "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
-                                                        });
-                                                      });
-                                                    },
+                                                      .then((headers) {
+                                                    setState(() {
+                                                      stateManager
+                                                          .setShowLoading(
+                                                              false);
+                                                      print(
+                                                          "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${updateCell.length}, Department Count : ${departmentList.length}");
+                                                      if (updateCell.length ==
+                                                          0) {
+                                                        processInfo =
+                                                            "Not Found";
+                                                      }
+                                                    });
+                                                  });
+                                                },
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: Icon(Icons.filter_list_alt),
+                                            onPressed: () {
+                                              showModal(context, Builder(
+                                                builder: (context) {
+                                                  return Expanded(
+                                                    child: Container(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width /
+                                                              3,
+                                                      child: StatefulBuilder(
+                                                          builder: (context,
+                                                              onState) {
+                                                        bool checkState = false;
+                                                        return ListView.builder(
+                                                          itemCount:
+                                                              headerList.length,
+                                                          itemBuilder:
+                                                              (context, index) {
+                                                            return ListTile(
+                                                              title: Text(
+                                                                  headerList[
+                                                                      index]),
+                                                              leading: Checkbox(
+                                                                  value: showHideHeaderList[
+                                                                          index]
+                                                                      [
+                                                                      headerList[
+                                                                          index]],
+                                                                  onChanged:
+                                                                      (status) {
+                                                                    onState(() {
+                                                                      showHideHeaderList[
+                                                                              index]
+                                                                          [
+                                                                          headerList[
+                                                                              index]] = status!;
+
+                                                                      print(
+                                                                          "${headerList[index]} : ${showHideHeaderList[index][headerList[index]]}");
+                                                                    });
+                                                                  }),
+                                                            );
+                                                          },
+                                                        );
+                                                      }),
+                                                    ),
                                                   );
-                                                });
-                                                Navigator.of(context).pop();
-                                              },
-                                              icon: Icon(Icons.done))
-                                        ]);
-                                      },
+                                                },
+                                              ),
+                                                  title: "Filter Columns",
+                                                  actions: [
+                                                    IconButton(
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            getCellValues(
+                                                                    selectedLocation!)
+                                                                .then(
+                                                              (cells) {
+                                                                getHeaderValues(
+                                                                        selectedLocation!)
+                                                                    .then(
+                                                                        (headers) {
+                                                                  headerList
+                                                                      .forEach(
+                                                                          (header) {
+                                                                    showHideHeaderList
+                                                                        .add({
+                                                                      header:
+                                                                          true
+                                                                    });
+                                                                  });
+                                                                  setState(() {
+                                                                    print(
+                                                                        showHideHeaderList[
+                                                                            0]);
+                                                                    print(
+                                                                        "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                                                  });
+                                                                });
+                                                              },
+                                                            );
+                                                          });
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                        icon: Icon(Icons.done))
+                                                  ]);
+                                            },
+                                          ),
+                                          MaterialButton(
+                                              color: Colors.black87,
+                                              onPressed: exportToCsv,
+                                              child: const Text(
+                                                "Export Excel",
+                                                style: TextStyle(
+                                                    color: Colors.white),
+                                              )),
+                                        ],
+                                      ),
                                     ),
-                                    MaterialButton(
-                                        color: Colors.black87,
-                                        onPressed: exportToCsv,
-                                        child: const Text(
-                                          "Export Excel",
-                                          style: TextStyle(color: Colors.white),
-                                        )),
                                   ],
                                 ),
                               );
@@ -475,6 +613,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               stateManager.setPageSize(50, notify: false);
                               return PlutoPagination(stateManager);
                             }),
+                            mode: PlutoGridMode.select,
                             configuration: const PlutoGridConfiguration(
                               scrollbar: PlutoGridScrollbarConfig(
                                 dragDevices: // In case of Mobile

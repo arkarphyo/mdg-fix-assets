@@ -13,14 +13,15 @@ class HomeScree extends StatefulWidget {
 
 class _HomeScreeState extends State<HomeScree> {
   bool isMenuOpen = false;
+  int selectedMenuItem = 0;
   GlobalKey<ScaffoldState> _key = GlobalKey();
 
   Map<String, dynamic> headers = {};
   List<dynamic> sheets = [];
 
-  void drawerToggle() {
-    _key.currentState?.openDrawer();
-  }
+  // void drawerToggle() {
+  //   _key.currentState?.openDrawer();
+  // }
 
   void toggleMenu() {
     setState(() {
@@ -39,6 +40,7 @@ class _HomeScreeState extends State<HomeScree> {
   void initState() {
     sideMenu.addListener((index) {
       pageController.jumpToPage(index);
+      selectedMenuItem = index;
     });
     apiService.getSheet("${googleSheetActiveUrl}").then((value) {
       //print(value['sheetNames']);
@@ -104,33 +106,45 @@ class _HomeScreeState extends State<HomeScree> {
     ];
     return Scaffold(
         key: _key,
-        // appBar: AppBar(
-        //   leading: IconButton(
-        //       icon: Icon(Icons.menu),
-        //       onPressed: () {
-        //         drawerToggle();
-        //       }),
-        //   actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.info))],
-        // ),
+        appBar: AppBar(
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Image.asset(
+              "assets/images/logo.png",
+              fit: BoxFit.fitHeight,
+              height: 50,
+            ),
+          ),
+          leading: IconButton(
+              icon: Icon(Icons.menu),
+              onPressed: () {
+                toggleMenu();
+              }),
+          actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.info))],
+        ),
         body: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             SideMenu(
+              alwaysShowFooter: true,
               style: SideMenuStyle(
-                  displayMode: SideMenuDisplayMode.auto,
+                  displayMode: isMenuOpen
+                      ? SideMenuDisplayMode.open
+                      : SideMenuDisplayMode.compact,
                   decoration: BoxDecoration(),
                   openSideMenuWidth: 200,
-                  compactSideMenuWidth: 40,
+                  compactSideMenuWidth: 50,
                   hoverColor: Colors.black26,
                   selectedColor: Colors.black87,
                   selectedIconColor: Colors.white,
                   unselectedIconColor: Colors.black54,
-                  backgroundColor: Colors.white,
+                  backgroundColor: Colors.transparent,
                   selectedTitleTextStyle: TextStyle(color: Colors.white),
                   unselectedTitleTextStyle: TextStyle(color: Colors.black54),
-                  iconSize: 20,
+                  iconSize: 24,
+                  selectedHoverColor: Colors.black.withOpacity(0.9),
                   itemBorderRadius: const BorderRadius.all(
-                    Radius.circular(5.0),
+                    Radius.circular(3.0),
                   ),
                   showTooltip: true,
                   itemHeight: 50.0,
@@ -139,10 +153,28 @@ class _HomeScreeState extends State<HomeScree> {
                   toggleColor: Colors.black54),
               // Page controller to manage a PageView
               controller: sideMenu,
+              displayModeToggleDuration: Duration(milliseconds: 300),
+              //showToggle: isMenuOpen,
               // Will shows on top of all items, it can be a logo or a Title text
-              title: Container(),
+              title: Container(
+                  margin: isMenuOpen ? EdgeInsets.all(4) : EdgeInsets.all(2),
+                  width: isMenuOpen ? 180 : 50,
+                  height: 46,
+                  child: isMenuOpen
+                      ? Image.asset("assets/images/logo.png")
+                      : Image.asset(
+                          "assets/images/MDG-LOGO-SQUARE.png",
+                          fit: BoxFit.contain,
+                        )),
               // Will show on bottom of SideMenu when displayMode was SideMenuDisplayMode.open
-              footer: Text('Info!'),
+              footer: Container(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Ver:1.0.1',
+                  style: TextStyle(fontSize: 10),
+                ),
+              ),
+
               // Notify when display mode changed
               onDisplayModeChanged: (mode) {
                 print(mode);
@@ -153,20 +185,6 @@ class _HomeScreeState extends State<HomeScree> {
             Expanded(
               child: Column(
                 children: [
-                  Container(
-                    decoration: BoxDecoration(color: Colors.black),
-                    padding: EdgeInsets.all(8),
-                    height: 50,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Application Bar",
-                          style: TextStyle(color: Colors.white),
-                        )
-                      ],
-                    ),
-                  ),
                   Expanded(
                     child: PageView(
                       controller: pageController,
