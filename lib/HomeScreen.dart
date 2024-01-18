@@ -1,6 +1,8 @@
 import 'package:easy_sidemenu/easy_sidemenu.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mdg_fixasset/Const/colors.dart';
+import 'package:mdg_fixasset/Const/images.dart';
 import 'package:mdg_fixasset/Screens/DashboardScreen.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
 
@@ -110,7 +112,7 @@ class _HomeScreeState extends State<HomeScree> {
           title: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Image.asset(
-              "assets/images/logo.png",
+              Images.square_logo,
               fit: BoxFit.fitHeight,
               height: 50,
             ),
@@ -134,15 +136,15 @@ class _HomeScreeState extends State<HomeScree> {
                   decoration: BoxDecoration(),
                   openSideMenuWidth: 200,
                   compactSideMenuWidth: 50,
-                  hoverColor: Colors.black26,
-                  selectedColor: Colors.black87,
+                  hoverColor: Colour.blue.withOpacity(0.2),
+                  selectedColor: Colour.blue,
                   selectedIconColor: Colors.white,
                   unselectedIconColor: Colors.black54,
                   backgroundColor: Colors.transparent,
                   selectedTitleTextStyle: TextStyle(color: Colors.white),
                   unselectedTitleTextStyle: TextStyle(color: Colors.black54),
                   iconSize: 24,
-                  selectedHoverColor: Colors.black.withOpacity(0.9),
+                  selectedHoverColor: Colour.blue.withOpacity(0.9),
                   itemBorderRadius: const BorderRadius.all(
                     Radius.circular(3.0),
                   ),
@@ -161,9 +163,9 @@ class _HomeScreeState extends State<HomeScree> {
                   width: isMenuOpen ? 180 : 50,
                   height: 46,
                   child: isMenuOpen
-                      ? Image.asset("assets/images/logo.png")
+                      ? Image.asset(Images.square_logo)
                       : Image.asset(
-                          "assets/images/MDG-LOGO-SQUARE.png",
+                          Images.logo,
                           fit: BoxFit.contain,
                         )),
               // Will show on bottom of SideMenu when displayMode was SideMenuDisplayMode.open
