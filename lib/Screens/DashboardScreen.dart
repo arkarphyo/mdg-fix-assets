@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mdg_fixasset/Const/colors.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:mdg_fixasset/Utils/UtilService.dart';
@@ -223,11 +224,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return itemList;
   }
 
-  void openDetail(PlutoRow? row) async {
+  Future<void> openDetail(PlutoCell? cell) async {
     String? value = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
-          final textController = TextEditingController();
+          final _dataController = TextEditingController();
           return Dialog(
             child: LayoutBuilder(
               builder: (ctx, size) {
@@ -243,23 +244,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 20),
-                        ...row!.cells.entries.map((e) {
-                          if (e.value.column != "" &&
-                              e.value.column.title != "No.") {
-                            return Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: TextField(
-                                controller: TextEditingController(),
-                                decoration: InputDecoration(
-                                  hintText: e.value.column.title,
-                                ),
-                              ),
-                            );
-                          } else {
-                            return Text(
-                                'ID : ${e.value.value} Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
-                          }
-                        }).toList(),
+                        Text(cell!.value.toString()),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextField(
+                            controller: _dataController,
+                            decoration: InputDecoration(
+                              hintText: cell.column.title,
+                            ),
+                          ),
+                        ),
+
+                        // ...row!.cells.entries.map((e) {
+                        //   if (e.value.column != "" &&
+                        //       e.value.column.title != "No.") {
+                        //     return Padding(
+                        //       padding: const EdgeInsets.all(8.0),
+                        //       child: TextFormField(
+                        //         controller: TextEditingController(),
+                        //         decoration: InputDecoration(
+                        //           hintText: e.value.column.title,
+                        //         ),
+                        //       ),
+                        //     );
+                        //   } else {
+                        //     return Text(
+                        //         'ID : ${e.value.value} Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
+                        //   }
+                        // }).toList(),
                         const SizedBox(height: 20),
                         Center(
                           child: Wrap(
@@ -273,7 +285,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               ElevatedButton(
                                 onPressed: () {
-                                  Navigator.pop(ctx, textController.text);
+                                  Navigator.pop(ctx, _dataController.text);
                                 },
                                 style: ButtonStyle(
                                   backgroundColor:
@@ -311,6 +323,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  //Export PDF
   void exportToPdf() async {
     var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
       title: "$selectedLocation",
@@ -324,6 +337,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  //Export CSV
   void exportToCsv() async {
     String title = "pluto_grid_export";
 
@@ -348,362 +362,356 @@ class _DashboardScreenState extends State<DashboardScreen> {
               headerList.forEach((header) {
                 showHideHeaderList.add({header: true});
               });
-              setState(() {
-                print(showHideHeaderList[0]);
-                print(
-                    "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
-              });
+              setState(() {});
             });
           },
         );
       });
     });
-
-    print(sheetList.length);
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (sheetList.length > 0 && positionList.length > 0) {
-      return Column(
-        children: [
-          cellsList.length > 0 && headerList.length > 0
-              ? Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: MediaQuery.of(context).size.width / 1.1,
-                          height: MediaQuery.of(context).size.height / 1.2,
-                          child: PlutoGrid(
-                            onLoaded: (event) {
-                              event.stateManager.setShowColumnFilter(true);
-                              stateManager = event.stateManager;
-                              stateManager.setSelectingMode(
-                                  PlutoGridSelectingMode.none);
-                            },
-                            onChanged: (PlutoGridOnChangedEvent event) {
-                              print(event);
-                            },
-                            onSelected: (PlutoGridOnSelectedEvent event) {
-                              if (event.row != null) {
-                                openDetail(event.row);
-                              }
-                            },
-                            createHeader: (stateManager) {
-                              stateManager.setFilter((element) => true);
-                              return Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      child:
-                                          Text("Total Rows : $sheetRowCount"),
-                                    ),
-                                    Container(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          //Choose Location
-                                          CustomDropdownSearch(
-                                            width: 6,
-                                            lable: selectedLocation,
-                                            itemList: locationList,
-                                            onChange: (selectedItem) {
-                                              print(
-                                                  "Location Item : $selectedItem");
-                                              setState(() {
-                                                if (selectedLocation
-                                                    .isNotEmpty) {
-                                                  stateManager
-                                                      .setShowLoading(true);
-                                                }
-                                                selectedLocation =
-                                                    selectedItem!;
-                                                processInfo = "Processing...";
-                                              });
-                                              getCellValues(selectedLocation!)
-                                                  .then(
-                                                (cells) {
-                                                  getHeaderValues(
-                                                          selectedLocation!)
-                                                      .then((headers) {
-                                                    headerList
-                                                        .forEach((header) {
-                                                      showHideHeaderList
-                                                          .add({header: true});
-                                                    });
-                                                    setState(() {
-                                                      if (selectedLocation
-                                                          .isNotEmpty) {
-                                                        stateManager
-                                                            .setShowLoading(
-                                                                false);
-                                                      }
-
-                                                      print(showHideHeaderList[
-                                                          0]);
-                                                      print(
-                                                          "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
-                                                    });
-                                                  });
-                                                },
-                                              );
-                                            },
-                                          ),
-
-                                          //Choose Department
-                                          CustomDropdownSearch(
-                                            width: 6,
-                                            lable: "Choose Department",
-                                            itemList: departmentList,
-                                            onChange: (selectedItem) {
-                                              print(
-                                                  "Department Item : $selectedItem");
-
-                                              setState(() {
+    return Column(
+      children: [
+        headerList.length > 0
+            ? Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: MediaQuery.of(context).size.width / 1.1,
+                        height: MediaQuery.of(context).size.height / 1.2,
+                        child: PlutoGrid(
+                          onLoaded: (event) {
+                            event.stateManager.setShowColumnFilter(true);
+                            stateManager = event.stateManager;
+                            stateManager
+                                .setSelectingMode(PlutoGridSelectingMode.row);
+                          },
+                          onChanged: (PlutoGridOnChangedEvent event) {
+                            print(event);
+                          },
+                          onSelected: (PlutoGridOnSelectedEvent event) async {
+                            if (event.row != null) {
+                              await openDetail(event.cell);
+                            }
+                          },
+                          createHeader: (stateManager) {
+                            stateManager.setFilter((element) => true);
+                            return Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    child: Text("Total Rows : $sheetRowCount"),
+                                  ),
+                                  Container(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        //Choose Location
+                                        CustomDropdownSearch(
+                                          width: 6,
+                                          lable: selectedLocation,
+                                          itemList: locationList,
+                                          onChange: (selectedItem) {
+                                            print(
+                                                "Location Item : $selectedItem");
+                                            setState(() {
+                                              if (selectedLocation.isNotEmpty) {
                                                 stateManager
                                                     .setShowLoading(true);
-                                                processInfo = "Processing...";
-                                                selectedDepartment =
-                                                    selectedItem!;
-                                              });
-                                              getCellValues(selectedLocation,
-                                                      filterColumn:
-                                                          "Department",
-                                                      filterValue:
-                                                          selectedDepartment)
-                                                  .then(
-                                                (updateCell) {
-                                                  getHeaderValues(
-                                                          selectedLocation!)
-                                                      .then((headers) {
-                                                    setState(() {
+                                              }
+                                              selectedLocation = selectedItem!;
+                                              processInfo = "Processing...";
+                                            });
+                                            getCellValues(selectedLocation!)
+                                                .then(
+                                              (cells) {
+                                                getHeaderValues(
+                                                        selectedLocation!)
+                                                    .then((headers) {
+                                                  headerList.forEach((header) {
+                                                    showHideHeaderList
+                                                        .add({header: true});
+                                                  });
+                                                  setState(() {
+                                                    if (selectedLocation
+                                                        .isNotEmpty) {
                                                       stateManager
                                                           .setShowLoading(
                                                               false);
-                                                      print(
-                                                          "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${updateCell.length}, Department Count : ${departmentList.length}");
-                                                      if (updateCell.length ==
-                                                          0) {
-                                                        processInfo =
-                                                            "Not Found";
-                                                      }
-                                                    });
-                                                  });
-                                                },
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: Icon(Icons.filter_list_alt),
-                                            onPressed: () {
-                                              showModal(context, Builder(
-                                                builder: (context) {
-                                                  return Expanded(
-                                                    child: Container(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width /
-                                                              3,
-                                                      child: StatefulBuilder(
-                                                          builder: (context,
-                                                              onState) {
-                                                        bool checkState = false;
-                                                        return ListView.builder(
-                                                          itemCount:
-                                                              headerList.length,
-                                                          itemBuilder:
-                                                              (context, index) {
-                                                            return ListTile(
-                                                              title: Text(
-                                                                  headerList[
-                                                                      index]),
-                                                              leading: Checkbox(
-                                                                  value: showHideHeaderList[
-                                                                          index]
-                                                                      [
-                                                                      headerList[
-                                                                          index]],
-                                                                  onChanged:
-                                                                      (status) {
-                                                                    onState(() {
-                                                                      showHideHeaderList[
-                                                                              index]
-                                                                          [
-                                                                          headerList[
-                                                                              index]] = status!;
+                                                    }
 
-                                                                      print(
-                                                                          "${headerList[index]} : ${showHideHeaderList[index][headerList[index]]}");
-                                                                    });
-                                                                  }),
-                                                            );
-                                                          },
-                                                        );
-                                                      }),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                                  title: "Filter Columns",
-                                                  actions: [
-                                                    IconButton(
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            getCellValues(
-                                                                    selectedLocation!)
-                                                                .then(
-                                                              (cells) {
-                                                                getHeaderValues(
-                                                                        selectedLocation!)
-                                                                    .then(
-                                                                        (headers) {
-                                                                  headerList
-                                                                      .forEach(
-                                                                          (header) {
-                                                                    showHideHeaderList
-                                                                        .add({
-                                                                      header:
-                                                                          true
-                                                                    });
+                                                    print(
+                                                        showHideHeaderList[0]);
+                                                    print(
+                                                        "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                                  });
+                                                });
+                                              },
+                                            );
+                                          },
+                                        ),
+
+                                        // //Choose Department
+                                        // CustomDropdownSearch(
+                                        //   width: 6,
+                                        //   lable: "Choose Department",
+                                        //   itemList: departmentList,
+                                        //   onChange: (selectedItem) {
+                                        //     print(
+                                        //         "Department Item : $selectedItem");
+
+                                        //     setState(() {
+                                        //       stateManager.setShowLoading(true);
+                                        //       processInfo = "Processing...";
+                                        //       selectedDepartment =
+                                        //           selectedItem!;
+                                        //     });
+                                        //     getCellValues(selectedLocation,
+                                        //             filterColumn: "Department",
+                                        //             filterValue:
+                                        //                 selectedDepartment)
+                                        //         .then(
+                                        //       (updateCell) {
+                                        //         getHeaderValues(
+                                        //                 selectedLocation!)
+                                        //             .then((headers) {
+                                        //           setState(() {
+                                        //             stateManager
+                                        //                 .setShowLoading(false);
+
+                                        //             if (updateCell.length ==
+                                        //                 0) {
+                                        //               processInfo = "Not Found";
+                                        //             }
+                                        //           });
+                                        //         });
+                                        //       },
+                                        //     );
+                                        //   },
+                                        // ),
+                                        IconButton(
+                                          icon: Icon(Icons.filter_list_alt),
+                                          onPressed: () {
+                                            showModal(context, Builder(
+                                              builder: (context) {
+                                                return Expanded(
+                                                  child: Container(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width /
+                                                            3,
+                                                    child: StatefulBuilder(
+                                                        builder:
+                                                            (context, onState) {
+                                                      bool checkState = false;
+                                                      return ListView.builder(
+                                                        itemCount:
+                                                            headerList.length,
+                                                        itemBuilder:
+                                                            (context, index) {
+                                                          return ListTile(
+                                                            title: Text(
+                                                                headerList[
+                                                                    index]),
+                                                            leading: Checkbox(
+                                                                value: showHideHeaderList[
+                                                                        index][
+                                                                    headerList[
+                                                                        index]],
+                                                                onChanged:
+                                                                    (status) {
+                                                                  onState(() {
+                                                                    showHideHeaderList[
+                                                                            index]
+                                                                        [
+                                                                        headerList[
+                                                                            index]] = status!;
+
+                                                                    print(
+                                                                        "${headerList[index]} : ${showHideHeaderList[index][headerList[index]]}");
                                                                   });
-                                                                  setState(() {
-                                                                    print(
-                                                                        showHideHeaderList[
-                                                                            0]);
-                                                                    print(
-                                                                        "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                                                }),
+                                                          );
+                                                        },
+                                                      );
+                                                    }),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                                title: "Filter Columns",
+                                                actions: [
+                                                  IconButton(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          getCellValues(
+                                                                  selectedLocation!)
+                                                              .then(
+                                                            (cells) {
+                                                              getHeaderValues(
+                                                                      selectedLocation!)
+                                                                  .then(
+                                                                      (headers) {
+                                                                headerList
+                                                                    .forEach(
+                                                                        (header) {
+                                                                  showHideHeaderList
+                                                                      .add({
+                                                                    header: true
                                                                   });
                                                                 });
-                                                              },
-                                                            );
-                                                          });
-                                                          Navigator.of(context)
-                                                              .pop();
-                                                        },
-                                                        icon: Icon(Icons.done))
-                                                  ]);
-                                            },
-                                          ),
-                                          MaterialButton(
-                                              color: Colors.black87,
+                                                                setState(() {
+                                                                  print(
+                                                                      showHideHeaderList[
+                                                                          0]);
+                                                                  print(
+                                                                      "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                                                });
+                                                              });
+                                                            },
+                                                          );
+                                                        });
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                      icon: Icon(Icons.done))
+                                                ]);
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.add),
+                                          onPressed: () {},
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: MaterialButton(
+                                              color: Colour.blue,
+                                              onPressed: exportToCsv,
+                                              child: const Text(
+                                                "Add",
+                                                style: TextStyle(
+                                                    color: Colors.white),
+                                              )),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: MaterialButton(
+                                              color: Colour.blue,
                                               onPressed: exportToCsv,
                                               child: const Text(
                                                 "Export Excel",
                                                 style: TextStyle(
                                                     color: Colors.white),
                                               )),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              );
-                            },
-                            createFooter: ((stateManager) {
-                              stateManager.setPageSize(50, notify: false);
-                              return PlutoPagination(stateManager);
-                            }),
-                            mode: PlutoGridMode.select,
-                            configuration: const PlutoGridConfiguration(
-                              scrollbar: PlutoGridScrollbarConfig(
-                                dragDevices: // In case of Mobile
-                                    // {
-                                    //   PointerDeviceKind.touch,
-                                    //   PointerDeviceKind.stylus,
-                                    //   PointerDeviceKind.invertedStylus,
-                                    //   PointerDeviceKind.unknown,
-                                    // }
-
-                                    // In case of desktop
-                                    {
-                                  PointerDeviceKind.mouse,
-                                  PointerDeviceKind.trackpad,
-                                  PointerDeviceKind.unknown,
-                                },
+                                  ),
+                                ],
                               ),
-                            ),
-                            columns: setColum(),
-                            rows: List<PlutoRow>.generate(cellsList.length,
-                                (index) {
-                              Map<String, PlutoCell> cells = {};
-                              headerList.forEach((header) {
-                                if (header == "No.") {
-                                  cells[header] = PlutoCell(value: index + 1);
-                                } else {
-                                  cells[header] = PlutoCell(
-                                      value: cellsList[index][header]);
-                                }
-                              });
-                              PlutoRow row = PlutoRow(cells: cells);
+                            );
+                          },
+                          createFooter: ((stateManager) {
+                            stateManager.setPageSize(50, notify: false);
+                            return PlutoPagination(stateManager);
+                          }),
+                          mode: PlutoGridMode.select,
+                          configuration: const PlutoGridConfiguration(
+                            scrollbar: PlutoGridScrollbarConfig(
+                              dragDevices: // In case of Mobile
+                                  // {
+                                  //   PointerDeviceKind.touch,
+                                  //   PointerDeviceKind.stylus,
+                                  //   PointerDeviceKind.invertedStylus,
+                                  //   PointerDeviceKind.unknown,
+                                  // }
 
-                              return row;
-                            }),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                )
-              : Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Center(
-                            child: LoadingWidget(
-                              title: "$processInfo",
-                              color: processInfo == "Processing..."
-                                  ? Colors.green
-                                  : Colors.red,
+                                  // In case of desktop
+                                  {
+                                PointerDeviceKind.mouse,
+                                PointerDeviceKind.trackpad,
+                                PointerDeviceKind.unknown,
+                              },
                             ),
                           ),
-                          processInfo == "Processing..."
-                              ? Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Container(
-                                    width: 25,
-                                    height: 25,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.black45,
-                                      strokeWidth: 1,
-                                    ),
-                                  ),
-                                )
-                              : Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Icon(
-                                    Icons.info_outline,
-                                    color: Colors.red,
-                                    size: 24,
-                                  ),
-                                ),
-                        ],
-                      ),
+                          columns: setColum(),
+                          rows: List<PlutoRow>.generate(cellsList.length,
+                              (index) {
+                            Map<String, PlutoCell> cells = {};
+                            headerList.forEach((header) {
+                              if (header == "No.") {
+                                cells[header] = PlutoCell(value: index + 1);
+                              } else {
+                                cells[header] =
+                                    PlutoCell(value: cellsList[index][header]);
+                              }
+                            });
+                            PlutoRow row = PlutoRow(cells: cells);
+                            return row;
+                          }),
+                        ),
+                      )
                     ],
                   ),
-                )
-        ],
-      );
-      //TableView(widget: widget, cellsList: cellsList, headerValues: headerValues, headerList: headerList);
-    } else {
-      return LoadingWidget();
-    }
+                ),
+              )
+            : Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: LoadingWidget(
+                            title: "$processInfo",
+                            color: processInfo == "Processing..."
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ),
+                        processInfo == "Processing..."
+                            ? Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: Container(
+                                  width: 25,
+                                  height: 25,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.black45,
+                                    strokeWidth: 1,
+                                  ),
+                                ),
+                              )
+                            : Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: Icon(
+                                  Icons.info_outline,
+                                  color: Colors.red,
+                                  size: 24,
+                                ),
+                              ),
+                      ],
+                    ),
+                  ],
+                ),
+              )
+      ],
+    );
   }
 }
 
