@@ -34,7 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   late PlutoGridStateManager stateManager;
 
   String processInfo = "";
-  String selectedLocation = "";
+  String selectedBranch = "";
   String selectedDepartment = "";
   String selectedPosition = "";
 
@@ -262,10 +262,10 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   //Update Row
   Future<void> updateRow(PlutoRow? row) async {
+    List<String> _data = [];
     Map<String, dynamic> value = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
-          List<dynamic> _dataController = [];
           return Dialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
@@ -285,10 +285,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                         const SizedBox(height: 20),
                         ...row!.cells.entries.map((e) {
                           _controllers[e.key]!.text = e.value.value.toString();
-                          print(_controllers[headerList[0]]!.text);
                           if (e.key.isNotEmpty && e.key != "No.") {
                             return Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 0),
                               child: ListTile(
                                 title: Text(e.key),
                                 subtitle: e.key == "Position" ||
@@ -308,6 +308,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                                     : TextFormField(
                                         controller: _controllers[e.key],
                                         decoration: InputDecoration(
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 4, vertical: 0),
                                           border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(4),
@@ -336,6 +338,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                               ),
                               ElevatedButton(
                                 onPressed: () {
+                                  _controllers
+                                      .forEach((editKey, editController) {
+                                    _data.add(editController.value!.text);
+                                    print(editController.value!.text);
+                                  });
+                                  print("Data : ${_data.join(",")}");
                                   Navigator.pop(ctx, _controllers);
                                 },
                                 style: ButtonStyle(
@@ -370,10 +378,10 @@ class _DashboardScreenState extends State<DashboardScreen>
     } else {
       await apiService
           .fetchData(
-              sheet: selectedLocation,
+              sheet: selectedBranch,
               requestType: "3",
-              row: value[headerList[0]]!.text.toString(),
-              data: "A,B,C,D")
+              row: (int.parse(value[headerList[0]]!.text) + 1).toString(),
+              data: "${_data.join(',')}")
           .then((response) {
         row!.cells.forEach((key, val) {
           stateManager.changeCellValue(
@@ -389,19 +397,21 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   //Update Cell
   Future<void> updateCell(PlutoCell? cell) async {
-    String? value = await showDialog(
+    Map<String, dynamic>? value = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
           final _dataController = TextEditingController();
+
           return Dialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(
               builder: (ctx, size) {
+                _dataController.text = cell!.value.toString();
+
                 return Container(
                   padding: const EdgeInsets.all(15),
-                  width: 400,
-                  height: MediaQuery.of(context).size.height / 1.1,
+                  width: 300,
                   decoration:
                       BoxDecoration(borderRadius: BorderRadius.circular(0)),
                   child: SingleChildScrollView(
@@ -410,34 +420,35 @@ class _DashboardScreenState extends State<DashboardScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 20),
-                        Text(cell!.value.toString()),
                         Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: TextField(
-                            controller: _dataController,
-                            decoration: InputDecoration(
-                              hintText: cell.column.title,
-                            ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
+                          child: ListTile(
+                            title: Text(cell!.column.title),
+                            subtitle: cell!.column.title == "Location" ||
+                                    cell!.column.title == "Position" ||
+                                    cell!.column.title == "Department" ||
+                                    cell!.column.title == "Type"
+                                ? CustomDropdownSearch(
+                                    itemList: setList(cell!.column.title),
+                                    lable: cell.value.toString(),
+                                    onChange: (selectedItem) {
+                                      _dataController.text = selectedItem!;
+                                    },
+                                  )
+                                : TextFormField(
+                                    controller: _dataController,
+                                    decoration: InputDecoration(
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 4, vertical: 0),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                        borderSide: BorderSide(width: 0.5),
+                                      ),
+                                    ),
+                                  ),
                           ),
                         ),
-
-                        // ...row!.cells.entries.map((e) {
-                        //   if (e.value.column != "" &&
-                        //       e.value.column.title != "No.") {
-                        //     return Padding(
-                        //       padding: const EdgeInsets.all(8.0),
-                        //       child: TextFormField(
-                        //         controller: TextEditingController(),
-                        //         decoration: InputDecoration(
-                        //           hintText: e.value.column.title,
-                        //         ),
-                        //       ),
-                        //     );
-                        //   } else {
-                        //     return Text(
-                        //         'ID : ${e.value.value} Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
-                        //   }
-                        // }).toList(),
                         const SizedBox(height: 20),
                         Center(
                           child: Wrap(
@@ -451,7 +462,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                               ),
                               ElevatedButton(
                                 onPressed: () {
-                                  Navigator.pop(ctx, _dataController.text);
+                                  Map<String, dynamic> data = {};
+                                  for (int i = 0; i < headerList.length; i++) {
+                                    if (cell!.column.title == headerList[i]) {
+                                      data['column'] = i + 1;
+                                    }
+                                  }
+                                  data['row'] =
+                                      (cell!.row.cells[headerList[0]]!.value) +
+                                          1;
+                                  data['value'] = _dataController.text;
+                                  Navigator.pop(ctx, data);
                                 },
                                 style: ButtonStyle(
                                   backgroundColor:
@@ -480,19 +501,44 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     if (value == null || value.isEmpty) {
       return;
+    } else {
+      stateManager.setShowLoading(true);
+      await apiService
+          .fetchData(
+        sheet: selectedBranch,
+        requestType: "5",
+        data: value['value'],
+        row: "${value['row']}",
+        column: "${value['column']}",
+      )
+          .then((result) {
+        if (result[0]['status']) {
+          stateManager.changeCellValue(
+            stateManager.currentCell!,
+            value['value'],
+            force: true,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+            "Update Successfully",
+            style: TextStyle(color: Colors.green),
+          )));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+            "Update failed",
+            style: TextStyle(color: Colors.red),
+          )));
+        }
+        stateManager.setShowLoading(false);
+      });
     }
-
-    stateManager.changeCellValue(
-      stateManager.currentRow!.cells['No.']!,
-      value,
-      force: true,
-    );
   }
 
   //Export PDF
   void exportToPdf() async {
     var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
-      title: "$selectedLocation",
+      title: "$selectedBranch",
       creator: "MDG-!T",
       format: pluto_grid_export.PdfPageFormat.a4.landscape,
     );
@@ -520,11 +566,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   void initState() {
     initBuildTable().then((value) {
       setState(() {
-        selectedLocation = "HO";
+        selectedBranch = "HO";
         sheetList = widget.sheetList;
-        getCellValues(selectedLocation!).then(
+        getCellValues(selectedBranch!).then(
           (cells) {
-            getHeaderValues(selectedLocation!).then((headers) {
+            getHeaderValues(selectedBranch!).then((headers) {
               headerList.forEach((header) {
                 showHideHeaderList.add({header: true});
               });
@@ -589,30 +635,28 @@ class _DashboardScreenState extends State<DashboardScreen>
                                         //Choose Location
                                         CustomDropdownSearch(
                                           width: 6,
-                                          lable: selectedLocation,
+                                          lable: selectedBranch,
                                           itemList: branchList,
                                           onChange: (selectedItem) {
                                             print("Branch : $selectedItem");
                                             setState(() {
-                                              if (selectedLocation.isNotEmpty) {
+                                              if (selectedBranch.isNotEmpty) {
                                                 stateManager
                                                     .setShowLoading(true);
                                               }
-                                              selectedLocation = selectedItem!;
+                                              selectedBranch = selectedItem!;
                                               processInfo = "Processing...";
                                             });
-                                            getCellValues(selectedLocation!)
-                                                .then(
+                                            getCellValues(selectedBranch!).then(
                                               (cells) {
-                                                getHeaderValues(
-                                                        selectedLocation!)
+                                                getHeaderValues(selectedBranch!)
                                                     .then((headers) {
                                                   headerList.forEach((header) {
                                                     showHideHeaderList
                                                         .add({header: true});
                                                   });
                                                   setState(() {
-                                                    if (selectedLocation
+                                                    if (selectedBranch
                                                         .isNotEmpty) {
                                                       stateManager
                                                           .setShowLoading(
@@ -622,7 +666,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                     print(
                                                         showHideHeaderList[0]);
                                                     print(
-                                                        "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                                        "SHEET : ${selectedBranch}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
                                                   });
                                                 });
                                               },
@@ -645,14 +689,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                                         //       selectedDepartment =
                                         //           selectedItem!;
                                         //     });
-                                        //     getCellValues(selectedLocation,
+                                        //     getCellValues(selectedBranch,
                                         //             filterColumn: "Department",
                                         //             filterValue:
                                         //                 selectedDepartment)
                                         //         .then(
                                         //       (updateCell) {
                                         //         getHeaderValues(
-                                        //                 selectedLocation!)
+                                        //                 selectedBranch!)
                                         //             .then((headers) {
                                         //           setState(() {
                                         //             stateManager
@@ -725,11 +769,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                       onPressed: () {
                                                         setState(() {
                                                           getCellValues(
-                                                                  selectedLocation!)
+                                                                  selectedBranch!)
                                                               .then(
                                                             (cells) {
                                                               getHeaderValues(
-                                                                      selectedLocation!)
+                                                                      selectedBranch!)
                                                                   .then(
                                                                       (headers) {
                                                                 headerList
@@ -745,7 +789,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                                       showHideHeaderList[
                                                                           0]);
                                                                   print(
-                                                                      "SHEET : ${selectedLocation}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                                                      "SHEET : ${selectedBranch}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
                                                                 });
                                                               });
                                                             },

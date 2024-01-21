@@ -11,6 +11,7 @@ class ApiService {
     String requestType = "",
     String sheet = "",
     String row = "",
+    String column = "",
     String data = "",
   }) async {
     String url = "";
@@ -18,7 +19,7 @@ class ApiService {
       hostUrl = gssUrl;
     }
     url =
-        "${hostUrl}request_type=${requestType}&sheet=${sheet}&row=${row}&data=${data}";
+        "${hostUrl}request_type=${requestType}&sheet=${sheet}&row=${row}&column=${column}&data=${data}";
     final response = await http.get(
       Uri.parse(
         url,
