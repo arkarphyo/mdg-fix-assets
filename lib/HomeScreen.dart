@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:desktop_window/desktop_window.dart';
 import 'package:easy_sidemenu/easy_sidemenu.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +50,12 @@ class _HomeScreeState extends State<HomeScree> {
     apiService.getSheet("${googleSheetActiveUrl}").then((value) {
       //print(value['sheetNames']);
       sheets = value;
+    });
+    Future.delayed(Duration.zero).then((finish) async {
+      if (Platform.isWindows) {
+        bool isFullScreen = await DesktopWindow.getFullScreen();
+        await DesktopWindow.setFullScreen(isFullScreen);
+      }
     });
     super.initState();
   }
@@ -156,6 +165,7 @@ class _HomeScreeState extends State<HomeScree> {
               // Page controller to manage a PageView
               controller: sideMenu,
               displayModeToggleDuration: Duration(milliseconds: 300),
+
               //showToggle: isMenuOpen,
               // Will shows on top of all items, it can be a logo or a Title text
               title: Container(
@@ -190,6 +200,11 @@ class _HomeScreeState extends State<HomeScree> {
                   Expanded(
                     child: PageView(
                       controller: pageController,
+                      onPageChanged: (value) {
+                        setState(() {
+                          selectedMenuItem = value;
+                        });
+                      },
                       children: [
                         FutureBuilder<List<String>>(
                           future: apiService.getSheet(googleSheetActiveUrl),
@@ -200,14 +215,31 @@ class _HomeScreeState extends State<HomeScree> {
                                 sheetList: snapshot.data!,
                               );
                             } else {
-                              return Center(
-                                child: Container(
-                                    height: 50,
-                                    width: 50,
-                                    child: const CupertinoActivityIndicator()),
+                              return const Center(
+                                child: CupertinoActivityIndicator(),
                               );
                             }
                           },
+                        ),
+                        Container(
+                          child: Center(
+                            child: Text('Ground Asset'),
+                          ),
+                        ),
+                        Container(
+                          child: Center(
+                            child: Text('IP Address & Port'),
+                          ),
+                        ),
+                        Container(
+                          child: Center(
+                            child: Text('Damage'),
+                          ),
+                        ),
+                        Container(
+                          child: Center(
+                            child: Text('Repair'),
+                          ),
                         ),
                         Container(
                           child: Center(

@@ -23,7 +23,12 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  // TODO: implement wantKeepAlive
+  bool get wantKeepAlive => true;
+
   ApiService apiService = ApiService();
   UtilService utilService = UtilService();
   late PlutoGridStateManager stateManager;
@@ -41,6 +46,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<String> headerList = [];
   List<String> sheetList = [];
 
+  Map<String, dynamic> _controllers = {};
+
   TextEditingController sheetDropdownSearchController = TextEditingController();
   TextEditingController departmentDropdownSearchController =
       TextEditingController();
@@ -48,10 +55,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<String> departmentList = [];
   List<String> positionList = [];
   List<String> locationList = [];
+  List<String> branchList = [];
+  List<String> typeList = ["Desktop", "Laptop"];
   int sheetRowCount = 0;
+
+  List<String> setList(String listType) {
+    switch (listType) {
+      case "Position":
+        return positionList;
+        break;
+      case "Location":
+        return locationList;
+        break;
+      case "Department":
+        return departmentList;
+        break;
+      case "Branch":
+        return branchList;
+        break;
+      case "Type":
+        return typeList;
+        break;
+      default:
+        return [];
+    }
+  }
 
   List<PlutoColumn> setColum() {
     return List<PlutoColumn>.generate(headerList.length, (index) {
+      _controllers[headerList[index]] = TextEditingController();
       if (headerList[index] == "No.") {
         return PlutoColumn(
             width: 50,
@@ -76,14 +108,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   //INITIALIZE BUILD
   Future<void> initBuildTable() async {
-    getOptionalValue("Department").then((department) {
+    getOptionalValue("Branch").then((branch) {
       setState(() {
-        departmentList = department;
+        branchList = branch;
       });
     });
     getOptionalValue("Location").then((location) {
       setState(() {
         locationList = location;
+      });
+    });
+    getOptionalValue("Department").then((department) {
+      setState(() {
+        departmentList = department;
       });
     });
     getOptionalValue("Position").then((position) {
@@ -122,9 +159,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .getHeader(
             "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=optional")
         .then((optionalItems) {
-      if (selector != "Location") {
-        optionaList.add('Select All');
-      }
+      // if (selector != "Location") {
+      //   optionaList.add('Select All');
+      // }
       optionalItems.forEach((item) {
         if (item["$selector"].isNotEmpty) {
           setState(() {
@@ -155,8 +192,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<List<Map<String, dynamic>>> getCellValues(String sheetName,
       {String filterColumn = "", String filterValue = ""}) async {
     await apiService
-        .fetchData(
-            "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=$sheetName")
+        .fetchData(requestType: "1", sheet: sheetName)
         .then((cells) {
       sheetRowCount = cells.length;
       cellsList.clear();
@@ -224,12 +260,142 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return itemList;
   }
 
-  Future<void> openDetail(PlutoCell? cell) async {
+  //Update Row
+  Future<void> updateRow(PlutoRow? row) async {
+    Map<String, dynamic> value = await showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          List<dynamic> _dataController = [];
+          return Dialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            child: LayoutBuilder(
+              builder: (ctx, size) {
+                return Container(
+                  padding: const EdgeInsets.all(15),
+                  width: 400,
+                  height: MediaQuery.of(context).size.height / 1.1,
+                  decoration:
+                      BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        ...row!.cells.entries.map((e) {
+                          _controllers[e.key]!.text = e.value.value.toString();
+                          print(_controllers[headerList[0]]!.text);
+                          if (e.key.isNotEmpty && e.key != "No.") {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ListTile(
+                                title: Text(e.key),
+                                subtitle: e.key == "Position" ||
+                                        e.key == "Location" ||
+                                        e.key == "Department" ||
+                                        e.key == "Position" ||
+                                        e.key == "Type"
+                                    ? CustomDropdownSearch(
+                                        itemList: setList(e.key),
+                                        lable: e.value.value.toString(),
+                                        onChange: (selectedItem) {
+                                          _controllers[e.key].text =
+                                              selectedItem;
+                                          print(_controllers[e.key].text);
+                                        },
+                                      )
+                                    : TextFormField(
+                                        controller: _controllers[e.key],
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            borderSide: BorderSide(width: 0.5),
+                                          ),
+                                          hintText: e.key,
+                                        ),
+                                      ),
+                              ),
+                            );
+                          } else {
+                            return Text(
+                                'Row နံပါတ် (${e.value.value}) ကို Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
+                          }
+                        }).toList(),
+                        const SizedBox(height: 20),
+                        Center(
+                          child: Wrap(
+                            spacing: 10,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx, null);
+                                },
+                                child: const Text('Cancel.'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx, _controllers);
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                    Colors.blue,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Update.',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        });
+    stateManager.setShowLoading(true);
+
+    if (value == null || value.isEmpty) {
+      stateManager.setShowLoading(false);
+      return;
+    } else {
+      await apiService
+          .fetchData(
+              sheet: selectedLocation,
+              requestType: "3",
+              row: value[headerList[0]]!.text.toString(),
+              data: "A,B,C,D")
+          .then((response) {
+        row!.cells.forEach((key, val) {
+          stateManager.changeCellValue(
+            stateManager.currentRow!.cells[key]!,
+            value[key]!.text,
+            force: true,
+          );
+        });
+      });
+      stateManager.setShowLoading(false);
+    }
+  }
+
+  //Update Cell
+  Future<void> updateCell(PlutoCell? cell) async {
     String? value = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
           final _dataController = TextEditingController();
           return Dialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(
               builder: (ctx, size) {
                 return Container(
@@ -398,7 +564,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           },
                           onSelected: (PlutoGridOnSelectedEvent event) async {
                             if (event.row != null) {
-                              await openDetail(event.cell);
+                              if (event.cell!.column.field == "No.") {
+                                await updateRow(event.row);
+                              } else {
+                                await updateCell(event.cell);
+                              }
                             }
                           },
                           createHeader: (stateManager) {
@@ -420,10 +590,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         CustomDropdownSearch(
                                           width: 6,
                                           lable: selectedLocation,
-                                          itemList: locationList,
+                                          itemList: branchList,
                                           onChange: (selectedItem) {
-                                            print(
-                                                "Location Item : $selectedItem");
+                                            print("Branch : $selectedItem");
                                             setState(() {
                                               if (selectedLocation.isNotEmpty) {
                                                 stateManager
@@ -639,6 +808,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                                   // In case of desktop
                                   {
+                                PointerDeviceKind.touch,
                                 PointerDeviceKind.mouse,
                                 PointerDeviceKind.trackpad,
                                 PointerDeviceKind.unknown,
@@ -834,69 +1004,3 @@ class _CustomDropdownSearchState extends State<CustomDropdownSearch> {
     );
   }
 }
-
-//Table View
-// class TableView extends StatefulWidget {
-//   const TableView({
-//     super.key,
-//     required this.widget,
-//     required this.cellsList,
-//     required this.headers,
-//   });
-
-//   final DashboardScreen widget;
-//   final List<Map<String, dynamic>> cellsList;
-//   final List<String> headers;
-
-//   @override
-//   State<TableView> createState() => _TableViewState();
-// }
-
-// class _TableViewState extends State<TableView> {
-//   List<DataColumn2> headrsList = [];
-
-//   @override
-//   void initState() {
-//     widget.headers.forEach((header) {
-//       DataColumn2 headerData = DataColumn2(
-//         label: Text("$header"),
-//         size: ColumnSize.M,
-//       );
-//       headrsList.add(headerData);
-//     });
-//     super.initState();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       width: MediaQuery.of(context).size.width / 1.2,
-//       height: MediaQuery.of(context).size.height / 1.3,
-//       child: Column(children: [
-//         Expanded(
-//           flex: 1,
-//           child: DataTable2(
-//             columnSpacing: 12,
-//             horizontalMargin: 12,
-//             minWidth: 600,
-//             isHorizontalScrollBarVisible: true,
-//             columns: headrsList,
-//             rows: List<DataRow>.generate(
-//                 widget.cellsList.length,
-//                 (rowIndex) => DataRow(
-//                         cells: List<DataCell>.generate(
-//                       widget.headers.length,
-//                       (cellIndex) => DataCell(
-//                         FittedBox(
-//                           fit: BoxFit.contain,
-//                           child: Text(
-//                               "${widget.cellsList[rowIndex][widget.headers[cellIndex]]}"),
-//                         ), //cellsList[rowIndex][headerValues[cellIndex]] ??
-//                       ),
-//                     ))),
-//           ),
-//         ),
-//       ]),
-//     );
-//   }
-// }
