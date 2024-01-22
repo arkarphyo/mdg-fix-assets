@@ -260,6 +260,35 @@ class _DashboardScreenState extends State<DashboardScreen>
     return itemList;
   }
 
+  Future<void> addRow() async {
+    List<PlutoRow> plutoRowList = [];
+    Map<String, dynamic> value = await showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          return Dialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            child: LayoutBuilder(builder: (ctx, size) {
+              return Container(
+                padding: const EdgeInsets.all(15),
+                width: 400,
+                height: MediaQuery.of(context).size.height / 1.1,
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: []),
+                ),
+              );
+            }),
+          );
+        });
+    // PlutoRow(cells: PlutoCell(key: ""))
+    // stateManager.appendRows(rows)
+  }
+
   //Update Row
   Future<void> updateRow(PlutoRow? row) async {
     List<String> _data = [];
