@@ -20,12 +20,12 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   void initState() {
-    Future.delayed(Duration.zero).then((finish) async {
-      if (Platform.isWindows) {
-        bool isFullScreen = await DesktopWindow.getFullScreen();
-        await DesktopWindow.setFullScreen(isFullScreen);
-      }
-    });
+    // Future.delayed(Duration.zero).then((finish) async {
+    //   if (Platform.isWindows) {
+    //     bool isFullScreen = await DesktopWindow.getFullScreen();
+    //     await DesktopWindow.setFullScreen(isFullScreen);
+    //   }
+    // });
     super.initState();
   }
 

@@ -261,8 +261,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> addRow() async {
-    List<PlutoRow> plutoRowList = [];
-    Map<String, dynamic> value = await showDialog(
+    List<PlutoRow> _rowList = [];
+    List<String> dataList = [];
+    //List<String>
+    var _data = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
           return Dialog(
@@ -279,20 +281,163 @@ class _DashboardScreenState extends State<DashboardScreen>
                   scrollDirection: Axis.vertical,
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: []),
+                      children: [
+                        Center(
+                            child: Text(
+                          "Add new purchased item",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        )),
+                        Column(
+                          children: List.generate(headerList.length, (index) {
+                            if (headerList[index] == "No.") {
+                              _controllers[headerList[index]]!.text =
+                                  "${sheetRowCount + 1}";
+                              return ListTile(
+                                title: Text("ROW ID"),
+                                subtitle: TextFormField(
+                                  enabled: false,
+                                  controller: _controllers[headerList[index]],
+                                  decoration: InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                      borderSide: BorderSide(width: 0.5),
+                                    ),
+                                    hintText: headerList[index],
+                                  ),
+                                ),
+                              );
+                            } else {
+                              _controllers[headerList[index]]!.text = "";
+                              return ListTile(
+                                title: Text(
+                                  headerList[index],
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: headerList[index] == "Position" ||
+                                        headerList[index] == "Location" ||
+                                        headerList[index] == "Department" ||
+                                        headerList[index] == "Position" ||
+                                        headerList[index] == "Type"
+                                    ? CustomDropdownSearch(
+                                        itemList: setList(headerList[index]),
+                                        lable: headerList[index],
+                                        onChange: (selectedItem) {
+                                          _controllers[headerList[index]].text =
+                                              selectedItem;
+                                          print(_controllers[headerList[index]]
+                                              .text);
+                                        },
+                                      )
+                                    : TextFormField(
+                                        controller:
+                                            _controllers[headerList[index]],
+                                        decoration: InputDecoration(
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 4, vertical: 0),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            borderSide: BorderSide(width: 0.5),
+                                          ),
+                                          hintText: headerList[index],
+                                        ),
+                                      ),
+                              );
+                            }
+                          }),
+                        ),
+                        const SizedBox(height: 20),
+                        Center(
+                          child: Wrap(
+                            spacing: 10,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx, null);
+                                },
+                                child: const Text('Cancel.'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  _controllers
+                                      .forEach((editKey, editController) {
+                                    dataList.add(editController.value!.text);
+                                    _rowList.add(PlutoRow(cells: {}));
+                                    print(editController.value!.text);
+                                  });
+                                  print("Data : ${dataList.join(",")}");
+                                  Navigator.pop(ctx, dataList);
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                    Colors.blue,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Update.',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]),
                 ),
               );
             }),
           );
         });
+
     // PlutoRow(cells: PlutoCell(key: ""))
     // stateManager.appendRows(rows)
+
+    stateManager.setShowLoading(true);
+    Map<String, PlutoCell> plutoCellObject = {};
+
+    _controllers.forEach((key, val) {
+      plutoCellObject[key] = PlutoCell(
+        value: val.value!.text.toString(),
+      );
+    });
+    _rowList.add(PlutoRow(cells: plutoCellObject));
+
+    if (_data == null || _data.isEmpty) {
+      stateManager.setShowLoading(false);
+      return;
+    } else {
+      await apiService
+          .fetchData(
+              sheet: selectedBranch,
+              requestType: "3",
+              row: (int.parse(_data[0]) + 1).toString(),
+              data: "${_data.join(',')}")
+          .then((response) {
+        stateManager.appendRows(_rowList);
+        stateManager.setShowLoading(false);
+        // row!.cells.forEach((key, val) {
+        //   stateManager.changeCellValue(
+        //     stateManager.currentRow!.cells[key]!,
+        //     value[key]!.text,
+        //     force: true,
+        //   );
+        // });
+      });
+    }
   }
 
   //Update Row
   Future<void> updateRow(PlutoRow? row) async {
     List<String> _data = [];
-    Map<String, dynamic> value = await showDialog(
+    //Map<String, dynamic>
+    var value = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
           return Dialog(
@@ -330,7 +475,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                         lable: e.value.value.toString(),
                                         onChange: (selectedItem) {
                                           _controllers[e.key].text =
-                                              selectedItem;
+                                              "$selectedItem";
                                           print(_controllers[e.key].text);
                                         },
                                       )
@@ -361,7 +506,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             children: [
                               TextButton(
                                 onPressed: () {
-                                  Navigator.pop(ctx, null);
+                                  Navigator.pop(ctx, {});
                                 },
                                 child: const Text('Cancel.'),
                               ),
@@ -426,7 +571,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   //Update Cell
   Future<void> updateCell(PlutoCell? cell) async {
-    Map<String, dynamic>? value = await showDialog(
+    //Map<String, dynamic>?
+    var value = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
           final _dataController = TextEditingController();
@@ -702,45 +848,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                             );
                                           },
                                         ),
-
-                                        // //Choose Department
-                                        // CustomDropdownSearch(
-                                        //   width: 6,
-                                        //   lable: "Choose Department",
-                                        //   itemList: departmentList,
-                                        //   onChange: (selectedItem) {
-                                        //     print(
-                                        //         "Department Item : $selectedItem");
-
-                                        //     setState(() {
-                                        //       stateManager.setShowLoading(true);
-                                        //       processInfo = "Processing...";
-                                        //       selectedDepartment =
-                                        //           selectedItem!;
-                                        //     });
-                                        //     getCellValues(selectedBranch,
-                                        //             filterColumn: "Department",
-                                        //             filterValue:
-                                        //                 selectedDepartment)
-                                        //         .then(
-                                        //       (updateCell) {
-                                        //         getHeaderValues(
-                                        //                 selectedBranch!)
-                                        //             .then((headers) {
-                                        //           setState(() {
-                                        //             stateManager
-                                        //                 .setShowLoading(false);
-
-                                        //             if (updateCell.length ==
-                                        //                 0) {
-                                        //               processInfo = "Not Found";
-                                        //             }
-                                        //           });
-                                        //         });
-                                        //       },
-                                        //     );
-                                        //   },
-                                        // ),
+                                        //Set Filter
                                         IconButton(
                                           icon: Icon(Icons.filter_list_alt),
                                           onPressed: () {
@@ -831,32 +939,41 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 ]);
                                           },
                                         ),
+                                        //Add ROW
                                         IconButton(
                                           icon: Icon(Icons.add),
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            addRow();
+                                          },
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: MaterialButton(
-                                              color: Colour.blue,
-                                              onPressed: exportToCsv,
-                                              child: const Text(
-                                                "Add",
-                                                style: TextStyle(
-                                                    color: Colors.white),
-                                              )),
+                                        IconButton(
+                                          onPressed: () {
+                                            exportToCsv();
+                                          },
+                                          icon: Icon(Icons.download),
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: MaterialButton(
-                                              color: Colour.blue,
-                                              onPressed: exportToCsv,
-                                              child: const Text(
-                                                "Export Excel",
-                                                style: TextStyle(
-                                                    color: Colors.white),
-                                              )),
-                                        ),
+                                        // Padding(
+                                        //   padding: const EdgeInsets.all(8.0),
+                                        //   child: MaterialButton(
+                                        //       color: Colour.blue,
+                                        //       onPressed: exportToCsv,
+                                        //       child: const Text(
+                                        //         "Add",
+                                        //         style: TextStyle(
+                                        //             color: Colors.white),
+                                        //       )),
+                                        // ),
+                                        // Padding(
+                                        //   padding: const EdgeInsets.all(8.0),
+                                        //   child: MaterialButton(
+                                        //       color: Colour.blue,
+                                        //       onPressed: exportToCsv,
+                                        //       child: const Text(
+                                        //         "Export Excel",
+                                        //         style: TextStyle(
+                                        //             color: Colors.white),
+                                        //       )),
+                                        // ),
                                       ],
                                     ),
                                   ),
@@ -895,6 +1012,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                             headerList.forEach((header) {
                               if (header == "No.") {
                                 cells[header] = PlutoCell(value: index + 1);
+                              } else if (header == "ID") {
+                                cells[header] = PlutoCell(
+                                  value: "*****",
+                                );
                               } else {
                                 cells[header] =
                                     PlutoCell(value: cellsList[index][header]);
