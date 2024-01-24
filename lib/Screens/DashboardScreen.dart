@@ -84,7 +84,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   List<PlutoColumn> setColum() {
     return List<PlutoColumn>.generate(headerList.length, (index) {
       _controllers[headerList[index]] = TextEditingController();
-      if (headerList[index] == "No.") {
+      if (headerList[index] == "No." || headerList[index] == "ID") {
         return PlutoColumn(
             width: 50,
             minWidth: 45,
@@ -92,7 +92,9 @@ class _DashboardScreenState extends State<DashboardScreen>
             textAlign: PlutoColumnTextAlign.center,
             title: headerList[index],
             field: headerList[index],
-            hide: !showHideHeaderList[index][headerList[index]],
+            hide: headerList[index] == "ID"
+                ? showHideHeaderList[index][headerList[index]]
+                : !showHideHeaderList[index][headerList[index]],
             type: PlutoColumnType.text());
       } else {
         return PlutoColumn(
@@ -295,6 +297,23 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   "${sheetRowCount + 1}";
                               return ListTile(
                                 title: Text("ROW ID"),
+                                subtitle: TextFormField(
+                                  enabled: false,
+                                  controller: _controllers[headerList[index]],
+                                  decoration: InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                      borderSide: BorderSide(width: 0.5),
+                                    ),
+                                    hintText: headerList[index],
+                                  ),
+                                ),
+                              );
+                            } else if (headerList[index] == "ID") {
+                              return ListTile(
+                                title: Text("UUID"),
                                 subtitle: TextFormField(
                                   enabled: false,
                                   controller: _controllers[headerList[index]],
