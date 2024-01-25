@@ -6,7 +6,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mdg_fixasset/Const/colors.dart';
 import 'package:mdg_fixasset/Const/images.dart';
+import 'package:mdg_fixasset/Screens/CctvReportScreen.dart';
 import 'package:mdg_fixasset/Screens/DashboardScreen.dart';
+import 'package:mdg_fixasset/Screens/GroundAssetScreen.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
 
 class HomeScree extends StatefulWidget {
@@ -23,6 +25,7 @@ class _HomeScreeState extends State<HomeScree> {
 
   Map<String, dynamic> headers = {};
   List<dynamic> sheets = [];
+  List<dynamic> cctvSheets = [];
 
   // void drawerToggle() {
   //   _key.currentState?.openDrawer();
@@ -37,8 +40,8 @@ class _HomeScreeState extends State<HomeScree> {
   PageController pageController = PageController();
   SideMenuController sideMenu = SideMenuController();
   String googleSheetActiveUrl =
-      "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec";
-  String param = "?sheet=Tamwe Office  PC List&request_type=2";
+      "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?";
+  String param = "sheet=Tamwe Office  PC List&request_type=2";
   ApiService apiService = ApiService();
 
   @override
@@ -47,10 +50,13 @@ class _HomeScreeState extends State<HomeScree> {
       pageController.jumpToPage(index);
       selectedMenuItem = index;
     });
-    apiService.getSheet("${googleSheetActiveUrl}").then((value) {
-      //print(value['sheetNames']);
-      sheets = value;
-    });
+    // apiService.getSheet("${ApiService.gssUrl}").then((value) {
+    //   //print(value['sheetNames']);
+    //   sheets = value;
+    // });
+    // apiService.getSheet("${ApiService.cctvUrl}").then((value) {
+    //   cctvSheets = value;
+    // });
     // Future.delayed(Duration.zero).then((finish) async {
     //   if (Platform.isWindows) {
     //     bool isFullScreen = await DesktopWindow.getFullScreen();
@@ -103,6 +109,13 @@ class _HomeScreeState extends State<HomeScree> {
         icon: Icon(Icons.rebase_edit),
       ),
       SideMenuItem(
+        title: 'CCTV Report',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.camera_indoor_outlined),
+      ),
+      SideMenuItem(
         title: 'Settings',
         onTap: (index, _) {
           sideMenu.changePage(index);
@@ -131,7 +144,15 @@ class _HomeScreeState extends State<HomeScree> {
               onPressed: () {
                 toggleMenu();
               }),
-          actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.info))],
+          actions: [
+            IconButton(
+                onPressed: () {
+                  apiService.getSheet("cctv").then((value) {
+                    print(value);
+                  });
+                },
+                icon: const Icon(Icons.info))
+          ],
         ),
         body: Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -207,25 +228,33 @@ class _HomeScreeState extends State<HomeScree> {
                       },
                       children: [
                         FutureBuilder<List<String>>(
-                          future: apiService.getSheet(googleSheetActiveUrl),
-                          builder:
-                              (context, AsyncSnapshot<List<String>> snapshot) {
-                            if (snapshot.hasData) {
-                              return DashboardScreen(
-                                sheetList: snapshot.data!,
-                              );
-                            } else {
-                              return const Center(
-                                child: CupertinoActivityIndicator(),
-                              );
-                            }
-                          },
-                        ),
-                        Container(
-                          child: Center(
-                            child: Text('Ground Asset'),
-                          ),
-                        ),
+                            future: apiService.getSheet(""),
+                            builder: (context,
+                                AsyncSnapshot<List<String>> snapshot) {
+                              if (snapshot.hasData) {
+                                return DashboardScreen(
+                                  sheetList: snapshot.data!,
+                                );
+                              } else {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                            }),
+                        FutureBuilder<List<String>>(
+                            future: apiService.getSheet(""),
+                            builder: (context,
+                                AsyncSnapshot<List<String>> snapshot) {
+                              if (snapshot.hasData) {
+                                return GroundAssetScreen(
+                                  sheetList: snapshot.data!,
+                                );
+                              } else {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                            }),
                         Container(
                           child: Center(
                             child: Text('IP Address & Port'),
@@ -241,6 +270,20 @@ class _HomeScreeState extends State<HomeScree> {
                             child: Text('Repair'),
                           ),
                         ),
+                        // FutureBuilder<List<String>>(
+                        //     future: apiService.getSheet(ApiService.cctvUrl),
+                        //     builder: (context,
+                        //         AsyncSnapshot<List<String>> snapshot) {
+                        //       if (snapshot.hasData) {
+                        //         return CctvReportScreen(
+                        //           sheetList: snapshot.data!,
+                        //         );
+                        //       } else {
+                        //         return Center(
+                        //           child: CircularProgressIndicator(),
+                        //         );
+                        //       }
+                        //     }),
                         Container(
                           child: Center(
                             child: Text('Settings'),
