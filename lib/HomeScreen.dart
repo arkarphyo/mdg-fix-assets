@@ -9,6 +9,7 @@ import 'package:mdg_fixasset/Const/images.dart';
 import 'package:mdg_fixasset/Screens/CctvReportScreen.dart';
 import 'package:mdg_fixasset/Screens/DashboardScreen.dart';
 import 'package:mdg_fixasset/Screens/GroundAssetScreen.dart';
+import 'package:mdg_fixasset/Screens/MobileServiceRecordScreen.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
 
 class HomeScree extends StatefulWidget {
@@ -114,6 +115,13 @@ class _HomeScreeState extends State<HomeScree> {
           sideMenu.changePage(index);
         },
         icon: Icon(Icons.camera_indoor_outlined),
+      ),
+      SideMenuItem(
+        title: 'MobileServiceRecord',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.mobile_friendly),
       ),
       SideMenuItem(
         title: 'Settings',
@@ -276,6 +284,21 @@ class _HomeScreeState extends State<HomeScree> {
                                 AsyncSnapshot<List<String>> snapshot) {
                               if (snapshot.hasData) {
                                 return CctvReportScreen(
+                                  sheetList: snapshot.data!,
+                                );
+                              } else {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                            }),
+                        FutureBuilder<List<String>>(
+                            future:
+                                apiService.getSheet(ApiService.mobileService),
+                            builder: (context,
+                                AsyncSnapshot<List<String>> snapshot) {
+                              if (snapshot.hasData) {
+                                return MobileServiceRecordScreen(
                                   sheetList: snapshot.data!,
                                 );
                               } else {

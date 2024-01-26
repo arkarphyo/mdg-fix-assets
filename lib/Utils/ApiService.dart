@@ -7,6 +7,8 @@ class ApiService {
       "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?";
   static String cctvUrl =
       "https://script.google.com/macros/s/AKfycbyXMyFZhBKUU_44R3D-Fr97iv-rxj_guCKBxUPTO8k5xhAVR6nFPLrnVS_0JdWtm4WUWg/exec?";
+  static String mobileService =
+      "https://script.google.com/macros/s/AKfycbyPcBD_oh4WLIURnZC45cSf6-VY8rNOe7rSwqBMbbTiGe-X7iT7GWfLncyWPqizy168Cw/exec?";
 
   Future<List<dynamic>> fetchData({
     String hostUrl = "",

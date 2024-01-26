@@ -15,15 +15,16 @@ import 'package:mdg_fixasset/constant.dart';
 import 'package:pluto_grid_export/pluto_grid_export.dart' as pluto_grid_export;
 import 'package:pluto_grid/pluto_grid.dart';
 
-class CctvReportScreen extends StatefulWidget {
-  const CctvReportScreen({super.key, required this.sheetList});
+class MobileServiceRecordScreen extends StatefulWidget {
+  const MobileServiceRecordScreen({super.key, required this.sheetList});
   final List<String> sheetList;
 
   @override
-  State<CctvReportScreen> createState() => _CctvReportScreenState();
+  State<MobileServiceRecordScreen> createState() =>
+      _MobileServiceRecordScreenState();
 }
 
-class _CctvReportScreenState extends State<CctvReportScreen>
+class _MobileServiceRecordScreenState extends State<MobileServiceRecordScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   // TODO: implement wantKeepAlive
@@ -57,6 +58,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
   List<String> locationList = [];
   List<String> branchList = [];
   List<String> typeList = ["Desktop", "Laptop"];
+
   int sheetRowCount = 0;
 
   List<String> setList(String listType) {
@@ -96,8 +98,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                 ? showHideHeaderList[index][headerList[index]]
                 : !showHideHeaderList[index][headerList[index]],
             type: PlutoColumnType.text());
-      } else if (headerList[index] == "Date" ||
-          headerList[index] == "Finished") {
+      } else if (headerList[index] == "Date" || headerList[index] == "FPC") {
         return PlutoColumn(
             width: 100,
             minWidth: 80,
@@ -108,7 +109,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
             hide: headerList[index] == "ID"
                 ? showHideHeaderList[index][headerList[index]]
                 : !showHideHeaderList[index][headerList[index]],
-            type: PlutoColumnType.date());
+            type: PlutoColumnType.text());
       } else {
         return PlutoColumn(
             backgroundColor: Colors.black12,
@@ -194,7 +195,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
   Future<List<String>> getHeaderValues(String sheetName) async {
     headerList.clear();
     await apiService
-        .getHeader("${ApiService.cctvUrl}request_type=2&sheet=$sheetName")
+        .getHeader("${ApiService.mobileService}request_type=2&sheet=$sheetName")
         .then((headers) {
       headers.forEach((header) {
         setState(() {
@@ -210,7 +211,9 @@ class _CctvReportScreenState extends State<CctvReportScreen>
       {String filterColumn = "", String filterValue = ""}) async {
     await apiService
         .fetchData(
-            hostUrl: ApiService.cctvUrl, requestType: "1", sheet: sheetName)
+            hostUrl: ApiService.mobileService,
+            requestType: "1",
+            sheet: sheetName)
         .then((cells) {
       sheetRowCount = cells.length;
       cellsList.clear();
@@ -450,7 +453,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
     } else {
       await apiService
           .fetchData(
-              hostUrl: ApiService.cctvUrl,
+              hostUrl: ApiService.mobileService,
               sheet: selectedBranch,
               requestType: "3",
               row: (int.parse(_data[0]) + 1).toString(),
@@ -588,7 +591,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
     } else {
       await apiService
           .fetchData(
-              hostUrl: ApiService.cctvUrl,
+              hostUrl: ApiService.mobileService,
               sheet: selectedBranch,
               requestType: "3",
               row: (int.parse(value[headerList[0]]!.text) + 1).toString(),
@@ -717,7 +720,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
       stateManager.setShowLoading(true);
       await apiService
           .fetchData(
-        hostUrl: ApiService.cctvUrl,
+        hostUrl: ApiService.mobileService,
         sheet: selectedBranch,
         requestType: "5",
         data: value['value'],
@@ -779,7 +782,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
   void initState() {
     initBuildTable().then((value) {
       setState(() {
-        selectedBranch = "2022";
+        selectedBranch = "January";
         sheetList = widget.sheetList;
         getCellValues(selectedBranch!).then(
           (cells) {
