@@ -270,20 +270,20 @@ class _HomeScreeState extends State<HomeScree> {
                             child: Text('Repair'),
                           ),
                         ),
-                        // FutureBuilder<List<String>>(
-                        //     future: apiService.getSheet(ApiService.cctvUrl),
-                        //     builder: (context,
-                        //         AsyncSnapshot<List<String>> snapshot) {
-                        //       if (snapshot.hasData) {
-                        //         return CctvReportScreen(
-                        //           sheetList: snapshot.data!,
-                        //         );
-                        //       } else {
-                        //         return Center(
-                        //           child: CircularProgressIndicator(),
-                        //         );
-                        //       }
-                        //     }),
+                        FutureBuilder<List<String>>(
+                            future: apiService.getSheet(ApiService.cctvUrl),
+                            builder: (context,
+                                AsyncSnapshot<List<String>> snapshot) {
+                              if (snapshot.hasData) {
+                                return CctvReportScreen(
+                                  sheetList: snapshot.data!,
+                                );
+                              } else {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                            }),
                         Container(
                           child: Center(
                             child: Text('Settings'),

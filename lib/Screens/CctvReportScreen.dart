@@ -65,7 +65,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
         return positionList;
         break;
       case "Location":
-        return locationList;
+        return branchList;
         break;
       case "Department":
         return departmentList;
@@ -110,9 +110,12 @@ class _CctvReportScreenState extends State<CctvReportScreen>
 
   //INITIALIZE BUILD
   Future<void> initBuildTable() async {
-    getOptionalValue("Branch").then((branch) {
+    setState(() {
+      branchList = widget.sheetList;
+    });
+    getOptionalValue("Branch").then((location) {
       setState(() {
-        branchList = branch;
+        locationList = location;
       });
     });
     getOptionalValue("Location").then((location) {
