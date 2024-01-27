@@ -1,8 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
-
-import 'package:dropdown_search/dropdown_search.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,10 +6,12 @@ import 'package:mdg_fixasset/Const/colors.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:mdg_fixasset/Utils/UtilService.dart';
-import 'package:mdg_fixasset/WIdgets/CustomAlertDialog.dart';
+import 'package:mdg_fixasset/WIdgets/CustomDropDownSearch.dart';
 import 'package:mdg_fixasset/constant.dart';
 import 'package:pluto_grid_export/pluto_grid_export.dart' as pluto_grid_export;
 import 'package:pluto_grid/pluto_grid.dart';
+
+import '../WIdgets/LoadingWidget.dart';
 
 class CctvReportScreen extends StatefulWidget {
   const CctvReportScreen({super.key, required this.sheetList});
@@ -23,22 +21,28 @@ class CctvReportScreen extends StatefulWidget {
   State<CctvReportScreen> createState() => _CctvReportScreenState();
 }
 
-class _CctvReportScreenState extends State<CctvReportScreen>
-    with AutomaticKeepAliveClientMixin {
+//Default Sheet
+//SET SetHeader
+//SET SetCell
+//
+
+class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepAliveClientMixin {
   @override
-  // TODO: implement wantKeepAlive
+  // Implement wantKeepAlive
   bool get wantKeepAlive => true;
 
   ApiService apiService = ApiService();
   UtilService utilService = UtilService();
   late PlutoGridStateManager stateManager;
 
-  String processInfo = "";
-  String selectedBranch = "";
+  bool processInfo = false;
+  String selectedYear = "";
   String selectedDepartment = "";
   String selectedPosition = "";
 
   bool isLoading = false;
+
+  List<PlutoColumn> plutoColumns = [];
 
   List<Map<String, dynamic>> cellsList = [];
   List<Map<String, dynamic>> showHideHeaderList = [];
@@ -46,89 +50,58 @@ class _CctvReportScreenState extends State<CctvReportScreen>
   List<String> headerList = [];
   List<String> sheetList = [];
 
-  Map<String, dynamic> _controllers = {};
+  final Map<String, dynamic> _controllers = {};
 
   TextEditingController sheetDropdownSearchController = TextEditingController();
-  TextEditingController departmentDropdownSearchController =
-      TextEditingController();
+  TextEditingController departmentDropdownSearchController = TextEditingController();
 
   List<String> departmentList = [];
   List<String> positionList = [];
   List<String> locationList = [];
+  List<String> yearList = [];
   List<String> branchList = [];
   List<String> typeList = ["Desktop", "Laptop"];
   int sheetRowCount = 0;
 
+  //Set Optional List Type
   List<String> setList(String listType) {
     switch (listType) {
       case "Position":
         return positionList;
-        break;
       case "Location":
-        return branchList;
-        break;
+        return locationList;
       case "Department":
         return departmentList;
-        break;
       case "Branch":
         return branchList;
-        break;
       case "Type":
         return typeList;
-        break;
       default:
         return [];
     }
   }
 
+  //Set Columns
   List<PlutoColumn> setColum() {
-    return List<PlutoColumn>.generate(headerList.length, (index) {
+    plutoColumns = List<PlutoColumn>.generate(headerList.length, (index) {
       _controllers[headerList[index]] = TextEditingController();
       if (headerList[index] == "No." || headerList[index] == "ID") {
-        return PlutoColumn(
-            width: 50,
-            minWidth: 45,
-            backgroundColor: Colors.black12,
-            textAlign: PlutoColumnTextAlign.center,
-            title: headerList[index],
-            field: headerList[index],
-            hide: headerList[index] == "ID"
-                ? showHideHeaderList[index][headerList[index]]
-                : !showHideHeaderList[index][headerList[index]],
-            type: PlutoColumnType.text());
-      } else if (headerList[index] == "Date" ||
-          headerList[index] == "Finished") {
-        return PlutoColumn(
-            width: 100,
-            minWidth: 80,
-            backgroundColor: Colors.black12,
-            textAlign: PlutoColumnTextAlign.center,
-            title: headerList[index],
-            field: headerList[index],
-            hide: headerList[index] == "ID"
-                ? showHideHeaderList[index][headerList[index]]
-                : !showHideHeaderList[index][headerList[index]],
-            type: PlutoColumnType.date());
+        return PlutoColumn(width: 50, minWidth: 45, backgroundColor: Colors.black12, textAlign: PlutoColumnTextAlign.center, title: headerList[index], field: headerList[index], hide: headerList[index] == "ID" ? showHideHeaderList[index][headerList[index]] : !showHideHeaderList[index][headerList[index]], type: PlutoColumnType.text());
       } else {
-        return PlutoColumn(
-            backgroundColor: Colors.black12,
-            textAlign: PlutoColumnTextAlign.center,
-            title: headerList[index],
-            field: headerList[index],
-            hide: !showHideHeaderList[index][headerList[index]],
-            type: PlutoColumnType.text());
+        return PlutoColumn(backgroundColor: Colors.black12, textAlign: PlutoColumnTextAlign.center, title: headerList[index], field: headerList[index], hide: !showHideHeaderList[index][headerList[index]], type: PlutoColumnType.text());
       }
     });
+    return plutoColumns;
   }
 
   //INITIALIZE BUILD
   Future<void> initBuildTable() async {
     setState(() {
-      branchList = widget.sheetList;
+      yearList = widget.sheetList;
     });
-    getOptionalValue("Branch").then((location) {
+    getOptionalValue("Branch").then((branch) {
       setState(() {
-        locationList = location;
+        branchList = branch;
       });
     });
     getOptionalValue("Location").then((location) {
@@ -146,101 +119,71 @@ class _CctvReportScreenState extends State<CctvReportScreen>
         positionList = position;
       });
     });
-    processInfo = "Initialize processing...";
-    // await apiService
-    //     .fetchData(
-    //         "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=Tamwe Office  PC List")
-    //     .then((cells) {
-    //   print("CELL ${cells.length}");
-    //   cells.forEach((cell) {
-    //     var cellData = cell;
-    //     setState(() {
-    //       cellsList.add(cell);
-    //     });
-    //   });
-    // });
-    // await apiService
-    //     .getHeader(
-    //         "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=2&sheet=Tamwe Office  PC List")
-    //     .then((headers) {
-    //   headers.forEach((header) {
-    //     setState(() {
-    //       headerList.add(header);
-    //     });
-    //   });
-    // });
+    processInfo = true;
   }
 
+  //Get OptionalValue
   Future<List<String>> getOptionalValue(String selector) async {
     List<String> optionaList = [];
-    await apiService
-        .getHeader("${ApiService.gssUrl}request_type=1&sheet=optional")
-        .then((optionalItems) {
+    await apiService.getHeader("https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=optional").then((optionalItems) {
       // if (selector != "Location") {
       //   optionaList.add('Select All');
       // }
-      optionalItems.forEach((item) {
-        if (item["$selector"].isNotEmpty) {
+      for (var item in optionalItems) {
+        if (item[selector].isNotEmpty) {
           setState(() {
-            optionaList.add('${item["$selector"]}');
+            optionaList.add('${item[selector]}');
           });
         }
-      });
+      }
     });
-    print(optionaList);
     return optionaList;
   }
 
+  //Get HeadeValues ---<URL>
   Future<List<String>> getHeaderValues(String sheetName) async {
     headerList.clear();
-    await apiService
-        .getHeader("${ApiService.cctvUrl}request_type=2&sheet=$sheetName")
-        .then((headers) {
-      headers.forEach((header) {
+    await apiService.getHeader("${ApiService.cctvUrl}request_type=2&sheet=$sheetName").then((headers) {
+      for (var header in headers) {
         setState(() {
           headerList.add('$header');
-          print("$header");
         });
-      });
+      }
     });
     return headerList;
   }
 
-  Future<List<Map<String, dynamic>>> getCellValues(String sheetName,
-      {String filterColumn = "", String filterValue = ""}) async {
-    await apiService
-        .fetchData(
-            hostUrl: ApiService.cctvUrl, requestType: "1", sheet: sheetName)
-        .then((cells) {
+  //Get CellValues ---<URL>
+  Future<List<Map<String, dynamic>>> getCellValues(String sheetName, {String filterColumn = "", String filterValue = ""}) async {
+    await apiService.fetchData(hostUrl: ApiService.cctvUrl, requestType: "1", sheet: sheetName).then((cells) {
       sheetRowCount = cells.length;
       cellsList.clear();
       if (filterColumn.isNotEmpty && filterValue != 'Select All') {
-        cells.forEach((cells) {
-          var cellData = cells;
-          if (cells[filterColumn] == filterValue) {
-            print("${cells[filterColumn] == filterValue}");
+        for (var cell in cells) {
+          var cellData = cell;
+          if (cell[filterColumn] == filterValue) {
             setState(() {
               cellsList.add(cellData);
             });
           }
-        });
+        }
       } else {
-        cells.forEach((cells) {
-          var cellData = cells;
+        for (var cell in cells) {
+          var cellData = cell;
           setState(() {
             cellsList.add(cellData);
           });
-        });
+        }
       }
     });
 
     return cellsList;
   }
 
-  Future<List<Map<String, dynamic>>> getFilterCells(String filterColum,
-      String filterValue, List<Map<String, dynamic>> dataList) async {
+  //Get FilterCells
+  Future<List<Map<String, dynamic>>> getFilterCells(String filterColum, String filterValue, List<Map<String, dynamic>> dataList) async {
     List<Map<String, dynamic>> responseDataList = [];
-    dataList.forEach((data) {
+    for (var datas in dataList) {
       Map<String, dynamic> cellData = {};
 
       cellData = dataList.firstWhere((cells) {
@@ -251,188 +194,164 @@ class _CctvReportScreenState extends State<CctvReportScreen>
         }
       });
       responseDataList.add(cellData);
-    });
+    }
     return responseDataList;
   }
 
+  //Get FilterValue
   List<String> getFilterValue(String headerName, String responseValue) {
     List<String> filterList = [];
-    List<Map<String, dynamic>> filterData =
-        utilService.removeDuplicates(cellsList, "$headerName");
-    filterData.forEach((filterValue) {
-      filterList.add(filterValue[responseValue]);
-    });
+    // List<Map<String, dynamic>> filterData =
+    //     utilService.removeDuplicates(cellsList, "$headerName");
+    // filterData.forEach((filterValue) {
+    //   filterList.add(filterValue[responseValue]);
+    // });
 
     return filterList;
   }
 
+  //Get ItemList
   List<dynamic> getItemList(
     List<Map> dataList,
   ) {
     List<dynamic> itemList = [];
-    dataList.forEach((data) {
+    for (var data in dataList) {
       setState(() {
         itemList.add(data);
       });
-    });
+    }
     return itemList;
   }
 
+  //Add Row
   Future<void> addRow() async {
-    List<PlutoRow> _rowList = [];
+    List<PlutoRow> rowList = [];
     List<String> dataList = [];
     //List<String>
-    var _data = await showDialog(
+    var data = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
           return Dialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(builder: (ctx, size) {
               return Container(
                 padding: const EdgeInsets.all(15),
                 width: 400,
                 height: MediaQuery.of(context).size.height / 1.1,
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                            child: Text(
-                          "Add new purchased item",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        )),
-                        Column(
-                          children: List.generate(headerList.length, (index) {
-                            if (headerList[index] == "No.") {
-                              _controllers[headerList[index]]!.text =
-                                  "${sheetRowCount + 1}";
-                              return ListTile(
-                                title: Text("ROW ID"),
-                                subtitle: TextFormField(
-                                  enabled: false,
-                                  controller: _controllers[headerList[index]],
-                                  decoration: InputDecoration(
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 4, vertical: 0),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(width: 0.5),
-                                    ),
-                                    hintText: headerList[index],
-                                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Center(
+                        child: Text(
+                      "Add new purchased item",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    )),
+                    Column(
+                      children: List.generate(headerList.length, (index) {
+                        if (headerList[index] == "No.") {
+                          _controllers[headerList[index]]!.text = "${sheetRowCount + 1}";
+                          return ListTile(
+                            title: const Text("ROW ID"),
+                            subtitle: TextFormField(
+                              enabled: false,
+                              controller: _controllers[headerList[index]],
+                              decoration: InputDecoration(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                  borderSide: const BorderSide(width: 0.5),
                                 ),
-                              );
-                            } else if (headerList[index] == "ID") {
-                              return ListTile(
-                                title: Text("UUID"),
-                                subtitle: TextFormField(
-                                  enabled: false,
-                                  controller: _controllers[headerList[index]],
-                                  decoration: InputDecoration(
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 4, vertical: 0),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(width: 0.5),
-                                    ),
-                                    hintText: headerList[index],
-                                  ),
+                                hintText: headerList[index],
+                              ),
+                            ),
+                          );
+                        } else if (headerList[index] == "ID") {
+                          return ListTile(
+                            title: const Text("UUID"),
+                            subtitle: TextFormField(
+                              enabled: false,
+                              controller: _controllers[headerList[index]],
+                              decoration: InputDecoration(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                  borderSide: const BorderSide(width: 0.5),
                                 ),
-                              );
-                            } else {
-                              _controllers[headerList[index]]!.text = "";
-                              return ListTile(
-                                title: Text(
-                                  headerList[index],
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: headerList[index] == "Position" ||
-                                        headerList[index] == "Location" ||
-                                        headerList[index] == "Department" ||
-                                        headerList[index] == "Position" ||
-                                        headerList[index] == "Type"
-                                    ? CustomDropdownSearch(
-                                        itemList: setList(headerList[index]),
-                                        lable: headerList[index],
-                                        onChange: (selectedItem) {
-                                          _controllers[headerList[index]].text =
-                                              selectedItem;
-                                          print(_controllers[headerList[index]]
-                                              .text);
-                                        },
-                                      )
-                                    : TextFormField(
-                                        controller:
-                                            _controllers[headerList[index]],
-                                        decoration: InputDecoration(
-                                          contentPadding: EdgeInsets.symmetric(
-                                              horizontal: 4, vertical: 0),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                            borderSide: BorderSide(width: 0.5),
-                                          ),
-                                          hintText: headerList[index],
-                                        ),
+                                hintText: headerList[index],
+                              ),
+                            ),
+                          );
+                        } else {
+                          _controllers[headerList[index]]!.text = "";
+                          return ListTile(
+                            title: Text(
+                              headerList[index],
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: headerList[index] == "Position" || headerList[index] == "Location" || headerList[index] == "Department" || headerList[index] == "Position" || headerList[index] == "Type"
+                                ? CustomDropdownSearch(
+                                    itemList: setList(headerList[index]),
+                                    lable: headerList[index],
+                                    onChange: (selectedItem) {
+                                      _controllers[headerList[index]].text = selectedItem;
+                                    },
+                                  )
+                                : TextFormField(
+                                    controller: _controllers[headerList[index]],
+                                    decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                        borderSide: const BorderSide(width: 0.5),
                                       ),
-                              );
-                            }
-                          }),
-                        ),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: Wrap(
-                            spacing: 10,
-                            children: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(ctx, null);
-                                },
-                                child: const Text('Cancel.'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  _controllers
-                                      .forEach((editKey, editController) {
-                                    dataList.add(editController.value!.text);
-                                    _rowList.add(PlutoRow(cells: {}));
-                                    print(editController.value!.text);
-                                  });
-                                  print("Data : ${dataList.join(",")}");
-                                  Navigator.pop(ctx, dataList);
-                                },
-                                style: ButtonStyle(
-                                  backgroundColor:
-                                      MaterialStateProperty.all<Color>(
-                                    Colors.blue,
+                                      hintText: headerList[index],
+                                    ),
                                   ),
-                                ),
-                                child: const Text(
-                                  'Update.',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          );
+                        }
+                      }),
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: Wrap(
+                        spacing: 10,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(ctx, null);
+                            },
+                            child: const Text('Cancel.'),
                           ),
-                        ),
-                      ]),
+                          ElevatedButton(
+                            onPressed: () {
+                              _controllers.forEach((editKey, editController) {
+                                dataList.add(editController.value!.text);
+                                rowList.add(PlutoRow(cells: {}));
+                              });
+                              Navigator.pop(ctx, dataList);
+                            },
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                Colors.blue,
+                              ),
+                            ),
+                            child: const Text(
+                              'Update.',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]),
                 ),
               );
             }),
           );
         });
-
-    // PlutoRow(cells: PlutoCell(key: ""))
-    // stateManager.appendRows(rows)
 
     stateManager.setShowLoading(true);
     Map<String, PlutoCell> plutoCellObject = {};
@@ -442,51 +361,36 @@ class _CctvReportScreenState extends State<CctvReportScreen>
         value: val.value!.text.toString(),
       );
     });
-    _rowList.add(PlutoRow(cells: plutoCellObject));
+    rowList.add(PlutoRow(cells: plutoCellObject));
 
-    if (_data == null || _data.isEmpty) {
+    if (data == null || data.isEmpty) {
       stateManager.setShowLoading(false);
       return;
     } else {
-      await apiService
-          .fetchData(
-              hostUrl: ApiService.cctvUrl,
-              sheet: selectedBranch,
-              requestType: "3",
-              row: (int.parse(_data[0]) + 1).toString(),
-              data: "${_data.join(',')}")
-          .then((response) {
-        stateManager.appendRows(_rowList);
+      //SET ---<URL>
+      await apiService.fetchData(hostUrl: ApiService.cctvUrl, sheet: selectedYear, requestType: "3", row: (int.parse(data[0]) + 1).toString(), data: "${data.join(',')}").then((response) {
+        stateManager.appendRows(rowList);
         stateManager.setShowLoading(false);
-        // row!.cells.forEach((key, val) {
-        //   stateManager.changeCellValue(
-        //     stateManager.currentRow!.cells[key]!,
-        //     value[key]!.text,
-        //     force: true,
-        //   );
-        // });
       });
     }
   }
 
   //Update Row
   Future<void> updateRow(PlutoRow? row) async {
-    List<String> _data = [];
+    List<String> data = [];
     //Map<String, dynamic>
     var value = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
           return Dialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(
               builder: (ctx, size) {
                 return Container(
                   padding: const EdgeInsets.all(15),
                   width: 400,
                   height: MediaQuery.of(context).size.height / 1.1,
-                  decoration:
-                      BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: Column(
@@ -497,33 +401,24 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                           _controllers[e.key]!.text = e.value.value.toString();
                           if (e.key.isNotEmpty && e.key != "No.") {
                             return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 4, vertical: 0),
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                               child: ListTile(
                                 title: Text(e.key),
-                                subtitle: e.key == "Position" ||
-                                        e.key == "Location" ||
-                                        e.key == "Department" ||
-                                        e.key == "Position" ||
-                                        e.key == "Type"
+                                subtitle: e.key == "Position" || e.key == "Location" || e.key == "Department" || e.key == "Position" || e.key == "Type"
                                     ? CustomDropdownSearch(
                                         itemList: setList(e.key),
                                         lable: e.value.value.toString(),
                                         onChange: (selectedItem) {
-                                          _controllers[e.key].text =
-                                              "$selectedItem";
-                                          print(_controllers[e.key].text);
+                                          _controllers[e.key].text = "$selectedItem";
                                         },
                                       )
                                     : TextFormField(
                                         controller: _controllers[e.key],
                                         decoration: InputDecoration(
-                                          contentPadding: EdgeInsets.symmetric(
-                                              horizontal: 4, vertical: 0),
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                                           border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                            borderSide: BorderSide(width: 0.5),
+                                            borderRadius: BorderRadius.circular(4),
+                                            borderSide: const BorderSide(width: 0.5),
                                           ),
                                           hintText: e.key,
                                         ),
@@ -531,8 +426,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                               ),
                             );
                           } else {
-                            return Text(
-                                'Row နံပါတ် (${e.value.value}) ကို Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
+                            return Text('Row နံပါတ် (${e.value.value}) ကို Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
                           }
                         }).toList(),
                         const SizedBox(height: 20),
@@ -548,17 +442,13 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                               ),
                               ElevatedButton(
                                 onPressed: () {
-                                  _controllers
-                                      .forEach((editKey, editController) {
-                                    _data.add(editController.value!.text);
-                                    print(editController.value!.text);
+                                  _controllers.forEach((editKey, editController) {
+                                    data.add(editController.value!.text);
                                   });
-                                  print("Data : ${_data.join(",")}");
                                   Navigator.pop(ctx, _controllers);
                                 },
                                 style: ButtonStyle(
-                                  backgroundColor:
-                                      MaterialStateProperty.all<Color>(
+                                  backgroundColor: MaterialStateProperty.all<Color>(
                                     Colors.blue,
                                   ),
                                 ),
@@ -586,14 +476,8 @@ class _CctvReportScreenState extends State<CctvReportScreen>
       stateManager.setShowLoading(false);
       return;
     } else {
-      await apiService
-          .fetchData(
-              hostUrl: ApiService.cctvUrl,
-              sheet: selectedBranch,
-              requestType: "3",
-              row: (int.parse(value[headerList[0]]!.text) + 1).toString(),
-              data: "${_data.join(',')}")
-          .then((response) {
+      //SET ---<URL>
+      await apiService.fetchData(hostUrl: ApiService.cctvUrl, sheet: selectedYear, requestType: "3", row: (int.parse(value[headerList[0]]!.text) + 1).toString(), data: data.join(',')).then((response) {
         row!.cells.forEach((key, val) {
           stateManager.changeCellValue(
             stateManager.currentRow!.cells[key]!,
@@ -612,20 +496,18 @@ class _CctvReportScreenState extends State<CctvReportScreen>
     var value = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
-          final _dataController = TextEditingController();
+          final dataController = TextEditingController();
 
           return Dialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(
               builder: (ctx, size) {
-                _dataController.text = cell!.value.toString();
+                dataController.text = cell!.value.toString();
 
                 return Container(
                   padding: const EdgeInsets.all(15),
                   width: 300,
-                  decoration:
-                      BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: Column(
@@ -633,29 +515,24 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                       children: [
                         const SizedBox(height: 20),
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                           child: ListTile(
-                            title: Text(cell!.column.title),
-                            subtitle: cell!.column.title == "Location" ||
-                                    cell!.column.title == "Position" ||
-                                    cell!.column.title == "Department" ||
-                                    cell!.column.title == "Type"
+                            title: Text(cell.column.title),
+                            subtitle: cell.column.title == "Location" || cell.column.title == "Position" || cell.column.title == "Department" || cell.column.title == "Type"
                                 ? CustomDropdownSearch(
-                                    itemList: setList(cell!.column.title),
+                                    itemList: setList(cell.column.title),
                                     lable: cell.value.toString(),
                                     onChange: (selectedItem) {
-                                      _dataController.text = selectedItem!;
+                                      dataController.text = selectedItem!;
                                     },
                                   )
                                 : TextFormField(
-                                    controller: _dataController,
+                                    controller: dataController,
                                     decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 4, vertical: 0),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(4),
-                                        borderSide: BorderSide(width: 0.5),
+                                        borderSide: const BorderSide(width: 0.5),
                                       ),
                                     ),
                                   ),
@@ -676,19 +553,16 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                                 onPressed: () {
                                   Map<String, dynamic> data = {};
                                   for (int i = 0; i < headerList.length; i++) {
-                                    if (cell!.column.title == headerList[i]) {
+                                    if (cell.column.title == headerList[i]) {
                                       data['column'] = i + 1;
                                     }
                                   }
-                                  data['row'] =
-                                      (cell!.row.cells[headerList[0]]!.value) +
-                                          1;
-                                  data['value'] = _dataController.text;
+                                  data['row'] = (cell.row.cells[headerList[0]]!.value) + 1;
+                                  data['value'] = dataController.text;
                                   Navigator.pop(ctx, data);
                                 },
                                 style: ButtonStyle(
-                                  backgroundColor:
-                                      MaterialStateProperty.all<Color>(
+                                  backgroundColor: MaterialStateProperty.all<Color>(
                                     Colors.blue,
                                   ),
                                 ),
@@ -715,10 +589,10 @@ class _CctvReportScreenState extends State<CctvReportScreen>
       return;
     } else {
       stateManager.setShowLoading(true);
+      //SET ---<URL>
       await apiService
           .fetchData(
-        hostUrl: ApiService.cctvUrl,
-        sheet: selectedBranch,
+        sheet: selectedYear,
         requestType: "5",
         data: value['value'],
         row: "${value['row']}",
@@ -731,13 +605,13 @@ class _CctvReportScreenState extends State<CctvReportScreen>
             value['value'],
             force: true,
           );
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
             "Update Successfully",
             style: TextStyle(color: Colors.green),
           )));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
             "Update failed",
             style: TextStyle(color: Colors.red),
@@ -751,7 +625,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
   //Export PDF
   void exportToPdf() async {
     var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
-      title: "$selectedBranch",
+      title: selectedYear,
       creator: "MDG-!T",
       format: pluto_grid_export.PdfPageFormat.a4.landscape,
     );
@@ -766,28 +640,30 @@ class _CctvReportScreenState extends State<CctvReportScreen>
   void exportToCsv() async {
     String title = "pluto_grid_export";
 
-    var exported = const Utf8Encoder()
-        .convert(pluto_grid_export.PlutoGridExport.exportCSV(stateManager));
+    var exported = const Utf8Encoder().convert(pluto_grid_export.PlutoGridExport.exportCSV(stateManager));
     DateTime now = DateTime.now();
     String dateTimeFormat = DateFormat('dd-MM-yyyy_hh:mm').format(now);
     // use file_saver from pub.dev
-    await FileSaver.instance.saveFile(
-        name: "${title}_$dateTimeFormat", ext: "csv", bytes: exported);
+    await FileSaver.instance.saveFile(name: "${title}_$dateTimeFormat", ext: "csv", bytes: exported);
   }
 
+  //INITIALIZE
   @override
   void initState() {
     initBuildTable().then((value) {
       setState(() {
-        selectedBranch = "2022";
+        DateTime now = DateTime.now();
+        String year = DateFormat('yyyy').format(now);
+        selectedYear = year;
         sheetList = widget.sheetList;
-        getCellValues(selectedBranch!).then(
+        getCellValues(selectedYear).then(
           (cells) {
-            getHeaderValues(selectedBranch!).then((headers) {
-              headerList.forEach((header) {
-                showHideHeaderList.add({header: true});
-              });
-              setState(() {});
+            getHeaderValues(selectedYear).then((headers) {
+              for (var header in headerList) {
+                setState(() {
+                  showHideHeaderList.add({header: true});
+                });
+              }
             });
           },
         );
@@ -796,11 +672,13 @@ class _CctvReportScreenState extends State<CctvReportScreen>
     super.initState();
   }
 
+  //BUILD
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Column(
       children: [
-        headerList.length > 0
+        headerList.isNotEmpty
             ? Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
@@ -808,19 +686,20 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
+                      SizedBox(
                         width: MediaQuery.of(context).size.width / 1.1,
                         height: MediaQuery.of(context).size.height / 1.2,
                         child: PlutoGrid(
                           onLoaded: (event) {
                             event.stateManager.setShowColumnFilter(true);
                             stateManager = event.stateManager;
-                            stateManager
-                                .setSelectingMode(PlutoGridSelectingMode.row);
+                            stateManager.setSelectingMode(PlutoGridSelectingMode.row);
+                            stateManager.setFilter((element) => true);
+                            // for (PlutoColumn col in plutoColumns) {
+                            //   stateManager.autoFitColumn(context, col);
+                            // }
                           },
-                          onChanged: (PlutoGridOnChangedEvent event) {
-                            print(event);
-                          },
+                          onChanged: (PlutoGridOnChangedEvent event) {},
                           onSelected: (PlutoGridOnSelectedEvent event) async {
                             if (event.row != null) {
                               if (event.cell!.column.field == "No.") {
@@ -831,189 +710,102 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                             }
                           },
                           createHeader: (stateManager) {
-                            stateManager.setFilter((element) => true);
+                            print(yearList.length);
                             return Padding(
                               padding: const EdgeInsets.all(4),
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Container(
-                                    child: Text("Total Rows : $sheetRowCount"),
-                                  ),
-                                  Container(
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        //Choose Location
-                                        CustomDropdownSearch(
-                                          width: 6,
-                                          lable: selectedBranch,
-                                          itemList: branchList,
-                                          onChange: (selectedItem) {
-                                            print("Branch : $selectedItem");
+                                  //Choose Location
+                                  CustomDropdownSearch(
+                                    width: 6,
+                                    lable: selectedYear,
+                                    itemList: yearList,
+                                    onChange: (selectedItem) {
+                                      setState(() {
+                                        if (selectedYear.isNotEmpty) {
+                                          stateManager.setShowLoading(true);
+                                        }
+                                        selectedYear = selectedItem!;
+                                        processInfo = true;
+                                      });
+                                      getCellValues(selectedYear).then(
+                                        (cells) {
+                                          getHeaderValues(selectedYear).then((headers) {
+                                            for (var header in headerList) {
+                                              showHideHeaderList.add({header: true});
+                                            }
                                             setState(() {
-                                              if (selectedBranch.isNotEmpty) {
-                                                stateManager
-                                                    .setShowLoading(true);
+                                              if (selectedYear.isNotEmpty) {
+                                                stateManager.setShowLoading(false);
                                               }
-                                              selectedBranch = selectedItem!;
-                                              processInfo = "Processing...";
                                             });
-                                            getCellValues(selectedBranch!).then(
-                                              (cells) {
-                                                getHeaderValues(selectedBranch!)
-                                                    .then((headers) {
-                                                  headerList.forEach((header) {
-                                                    showHideHeaderList
-                                                        .add({header: true});
-                                                  });
-                                                  setState(() {
-                                                    if (selectedBranch
-                                                        .isNotEmpty) {
-                                                      stateManager
-                                                          .setShowLoading(
-                                                              false);
-                                                    }
-
-                                                    print(
-                                                        showHideHeaderList[0]);
-                                                    print(
-                                                        "SHEET : ${selectedBranch}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
-                                                  });
-                                                });
-                                              },
-                                            );
-                                          },
-                                        ),
-                                        //Set Filter
-                                        IconButton(
-                                          icon: Icon(Icons.filter_list_alt),
-                                          onPressed: () {
-                                            showModal(context, Builder(
-                                              builder: (context) {
-                                                return Expanded(
-                                                  child: Container(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width /
-                                                            3,
-                                                    child: StatefulBuilder(
-                                                        builder:
-                                                            (context, onState) {
-                                                      bool checkState = false;
-                                                      return ListView.builder(
-                                                        itemCount:
-                                                            headerList.length,
-                                                        itemBuilder:
-                                                            (context, index) {
-                                                          return ListTile(
-                                                            title: Text(
-                                                                headerList[
-                                                                    index]),
-                                                            leading: Checkbox(
-                                                                value: showHideHeaderList[
-                                                                        index][
-                                                                    headerList[
-                                                                        index]],
-                                                                onChanged:
-                                                                    (status) {
-                                                                  onState(() {
-                                                                    showHideHeaderList[
-                                                                            index]
-                                                                        [
-                                                                        headerList[
-                                                                            index]] = status!;
-
-                                                                    print(
-                                                                        "${headerList[index]} : ${showHideHeaderList[index][headerList[index]]}");
-                                                                  });
-                                                                }),
-                                                          );
-                                                        },
-                                                      );
-                                                    }),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                                title: "Filter Columns",
-                                                actions: [
-                                                  IconButton(
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          getCellValues(
-                                                                  selectedBranch!)
-                                                              .then(
-                                                            (cells) {
-                                                              getHeaderValues(
-                                                                      selectedBranch!)
-                                                                  .then(
-                                                                      (headers) {
-                                                                headerList
-                                                                    .forEach(
-                                                                        (header) {
-                                                                  showHideHeaderList
-                                                                      .add({
-                                                                    header: true
-                                                                  });
+                                          });
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      //Set Filter Columns
+                                      IconButton(
+                                        icon: const Icon(Icons.filter_list_alt),
+                                        onPressed: () {
+                                          showModal(context, Builder(
+                                            builder: (context) {
+                                              return Expanded(
+                                                child: SizedBox(
+                                                  width: MediaQuery.of(context).size.width / 3,
+                                                  child: StatefulBuilder(builder: (context, onState) {
+                                                    return ListView.builder(
+                                                      itemCount: headerList.length,
+                                                      itemBuilder: (context, index) {
+                                                        return ListTile(
+                                                          title: Text(headerList[index]),
+                                                          leading: Checkbox(
+                                                              value: showHideHeaderList[index][headerList[index]],
+                                                              onChanged: (status) {
+                                                                onState(() {
+                                                                  showHideHeaderList[index][headerList[index]] = status!;
+                                                                  stateManager.hideColumn(plutoColumns[index], status == true ? false : true, notify: true);
                                                                 });
-                                                                setState(() {
-                                                                  print(
-                                                                      showHideHeaderList[
-                                                                          0]);
-                                                                  print(
-                                                                      "SHEET : ${selectedBranch}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
-                                                                });
-                                                              });
-                                                            },
-                                                          );
-                                                        });
-                                                        Navigator.of(context)
-                                                            .pop();
+                                                              }),
+                                                        );
                                                       },
-                                                      icon: Icon(Icons.done))
-                                                ]);
-                                          },
-                                        ),
-                                        //Add ROW
-                                        IconButton(
-                                          icon: Icon(Icons.add),
-                                          onPressed: () {
-                                            addRow();
-                                          },
-                                        ),
-                                        IconButton(
-                                          onPressed: () {
-                                            exportToCsv();
-                                          },
-                                          icon: Icon(Icons.download),
-                                        ),
-                                        // Padding(
-                                        //   padding: const EdgeInsets.all(8.0),
-                                        //   child: MaterialButton(
-                                        //       color: Colour.blue,
-                                        //       onPressed: exportToCsv,
-                                        //       child: const Text(
-                                        //         "Add",
-                                        //         style: TextStyle(
-                                        //             color: Colors.white),
-                                        //       )),
-                                        // ),
-                                        // Padding(
-                                        //   padding: const EdgeInsets.all(8.0),
-                                        //   child: MaterialButton(
-                                        //       color: Colour.blue,
-                                        //       onPressed: exportToCsv,
-                                        //       child: const Text(
-                                        //         "Export Excel",
-                                        //         style: TextStyle(
-                                        //             color: Colors.white),
-                                        //       )),
-                                        // ),
-                                      ],
-                                    ),
+                                                    );
+                                                  }),
+                                                ),
+                                              );
+                                            },
+                                          ), title: "Filter Columns", topActions: [
+                                            SizedBox(
+                                              width: 200,
+                                              child: SizedBox(
+                                                child: ListTile(
+                                                  trailing: Checkbox(onChanged: (status) {}, value: true),
+                                                  title: const Text("Select All"),
+                                                ),
+                                              ),
+                                            ),
+                                          ], bottomActions: []);
+                                        },
+                                      ),
+                                      //Add Row
+                                      IconButton(
+                                        icon: const Icon(Icons.add),
+                                        onPressed: () {
+                                          addRow();
+                                        },
+                                      ),
+                                      //ExportCSV
+                                      IconButton(
+                                        onPressed: () {
+                                          exportToCsv();
+                                        },
+                                        icon: const Icon(Icons.download),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -1021,7 +813,13 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                           },
                           createFooter: ((stateManager) {
                             stateManager.setPageSize(50, notify: false);
-                            return PlutoPagination(stateManager);
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(width: MediaQuery.of(context).size.width / 2, child: PlutoPagination(stateManager)),
+                                Text("Total Rows : $sheetRowCount"),
+                              ],
+                            );
                           }),
                           mode: PlutoGridMode.select,
                           configuration: const PlutoGridConfiguration(
@@ -1044,24 +842,19 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                             ),
                           ),
                           columns: setColum(),
-                          rows: List<PlutoRow>.generate(cellsList.length,
-                              (index) {
+                          rows: List<PlutoRow>.generate(cellsList.length, (index) {
                             Map<String, PlutoCell> cells = {};
-                            headerList.forEach((header) {
+                            for (var header in headerList) {
                               if (header == "No.") {
                                 cells[header] = PlutoCell(value: index + 1);
                               } else if (header == "ID") {
                                 cells[header] = PlutoCell(
                                   value: "*****",
                                 );
-                              } else if (header == "Date") {
-                                cells[header] =
-                                    PlutoCell(value: cellsList[index][header]);
                               } else {
-                                cells[header] =
-                                    PlutoCell(value: cellsList[index][header]);
+                                cells[header] = PlutoCell(value: cellsList[index][header]);
                               }
-                            });
+                            }
                             PlutoRow row = PlutoRow(cells: cells);
                             return row;
                           }),
@@ -1082,160 +875,16 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                       children: [
                         Center(
                           child: LoadingWidget(
-                            title: "$processInfo",
-                            color: processInfo == "Processing..."
-                                ? Colors.green
-                                : Colors.red,
+                            title: "Loading...",
+                            color: processInfo ? Colour.blue : Colors.red,
                           ),
                         ),
-                        processInfo == "Processing..."
-                            ? Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                child: Container(
-                                  width: 25,
-                                  height: 25,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.black45,
-                                    strokeWidth: 1,
-                                  ),
-                                ),
-                              )
-                            : Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                child: Icon(
-                                  Icons.info_outline,
-                                  color: Colors.red,
-                                  size: 24,
-                                ),
-                              ),
                       ],
                     ),
                   ],
                 ),
               )
       ],
-    );
-  }
-}
-
-//LOADING WIDGET
-class LoadingWidget extends StatelessWidget {
-  const LoadingWidget({
-    super.key,
-    this.title = "LOADING...",
-    this.color,
-  });
-
-  final String title;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          Text("$title"),
-          Container(
-              height: 1,
-              width: MediaQuery.of(context).size.width / 6,
-              child: LinearProgressIndicator(
-                color: color,
-              )),
-        ],
-      ),
-    );
-  }
-}
-
-//CustomDropdownSearch Widget
-class CustomDropdownSearch extends StatefulWidget {
-  const CustomDropdownSearch({
-    super.key,
-    required this.itemList,
-    this.onChange,
-    required this.lable,
-    this.width = 8,
-    this.margin = 4,
-  });
-
-  final String lable;
-  final List<String> itemList;
-  final Function(String?)? onChange;
-  final double width;
-  final double margin;
-
-  @override
-  State<CustomDropdownSearch> createState() => _CustomDropdownSearchState();
-}
-
-class _CustomDropdownSearchState extends State<CustomDropdownSearch> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.all(widget.margin),
-      padding: EdgeInsets.symmetric(horizontal: 4),
-      width: MediaQuery.of(context).size.width / widget.width,
-      decoration: BoxDecoration(
-          border: Border.all(width: 1, color: Colors.black),
-          borderRadius: BorderRadius.circular(6)),
-      child: DropdownSearch<String>(
-        popupProps: PopupProps.menu(
-          itemBuilder: (context, item, isSelected) {
-            return Container(
-              margin: EdgeInsets.symmetric(horizontal: 2),
-              padding: EdgeInsets.all(0),
-              decoration: !isSelected
-                  ? null
-                  : BoxDecoration(
-                      border: Border(
-                        left: BorderSide(color: Theme.of(context).primaryColor),
-                      ),
-                      color: Colors.white,
-                    ),
-              child: ListTile(
-                selected: isSelected,
-                title: Text(
-                  item,
-                  style: TextStyle(fontSize: 12),
-                ),
-              ),
-            );
-          },
-          menuProps: MenuProps(
-            backgroundColor: Colors.white,
-            elevation: 4,
-          ),
-          showSearchBox: true,
-          searchFieldProps: TextFieldProps(
-              decoration: InputDecoration(
-                  contentPadding: EdgeInsets.all(2),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 1),
-                    borderRadius: BorderRadius.circular(4),
-                  )),
-              autocorrect: true,
-              padding: EdgeInsets.all(2),
-              scrollPadding: EdgeInsets.all(2)),
-          showSelectedItems: true,
-          disabledItemFn: (String s) => s.isEmpty,
-        ),
-        dropdownDecoratorProps: const DropDownDecoratorProps(
-          dropdownSearchDecoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: "",
-          ),
-        ),
-        items: widget.itemList,
-        onChanged: widget.onChange,
-        selectedItem: "${widget.lable}",
-      ),
     );
   }
 }

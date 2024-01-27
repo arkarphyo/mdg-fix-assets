@@ -5,12 +5,14 @@ class CustomAlertDialog extends StatefulWidget {
     super.key,
     required this.title,
     required this.contet,
-    required this.actions,
+    required this.bottomActions,
     this.align,
+    required this.topActions,
   });
   final String title;
   final Widget contet;
-  final List<Widget> actions;
+  final List<Widget> bottomActions;
+  final List<Widget> topActions;
   final AlignmentGeometry? align;
   @override
   State<CustomAlertDialog> createState() => _CustomAlertDialogState();
@@ -24,9 +26,7 @@ class _CustomAlertDialogState extends State<CustomAlertDialog> {
       shadowColor: Colors.black,
       surfaceTintColor: Colors.black,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(10),
-            topRight: Radius.circular(10)), // Customize border radius
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)), // Customize border radius
       ),
       elevation: 0.0,
       backgroundColor: Colors.black,
@@ -56,11 +56,13 @@ class _CustomAlertDialogState extends State<CustomAlertDialog> {
                 style: TextStyle(fontSize: 16.0, color: Colors.black),
               ),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: widget.topActions ?? [],
+            ),
             widget.contet,
-            Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: widget.actions)
+            Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: widget.bottomActions ?? [])
           ],
         ),
       ),

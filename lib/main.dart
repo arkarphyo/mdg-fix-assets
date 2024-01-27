@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:desktop_window/desktop_window.dart';
 import 'package:flutter/material.dart';
+import 'package:mdg_fixasset/Const/colors.dart';
 import 'package:mdg_fixasset/HomeScreen.dart';
 import 'package:mdg_fixasset/Utils/CustomScrollBehavior.dart';
 
@@ -36,7 +36,7 @@ class _MyAppState extends State<MyApp> {
       title: 'MDG Fix Assets',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colour.blue),
         useMaterial3: true,
       ),
       home: const HomeScree(),

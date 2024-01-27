@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:desktop_window/desktop_window.dart';
 import 'package:easy_sidemenu/easy_sidemenu.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -40,8 +39,7 @@ class _HomeScreeState extends State<HomeScree> {
 
   PageController pageController = PageController();
   SideMenuController sideMenu = SideMenuController();
-  String googleSheetActiveUrl =
-      "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?";
+  String googleSheetActiveUrl = "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?";
   String param = "sheet=Tamwe Office  PC List&request_type=2";
   ApiService apiService = ApiService();
 
@@ -89,7 +87,7 @@ class _HomeScreeState extends State<HomeScree> {
         icon: Icon(Icons.inbox),
       ),
       SideMenuItem(
-        title: 'PC Name & IP',
+        title: 'Laptops',
         onTap: (index, _) {
           sideMenu.changePage(index);
         },
@@ -103,7 +101,7 @@ class _HomeScreeState extends State<HomeScree> {
         icon: Icon(Icons.delete),
       ),
       SideMenuItem(
-        title: 'Repair',
+        title: 'Network & IP',
         onTap: (index, _) {
           sideMenu.changePage(index);
         },
@@ -117,11 +115,25 @@ class _HomeScreeState extends State<HomeScree> {
         icon: Icon(Icons.camera_indoor_outlined),
       ),
       SideMenuItem(
+        title: 'Repair Assets',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.handyman),
+      ),
+      SideMenuItem(
+        title: 'Maintance Record',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.note_alt_rounded),
+      ),
+      SideMenuItem(
         title: 'MobileServiceRecord',
         onTap: (index, _) {
           sideMenu.changePage(index);
         },
-        icon: Icon(Icons.mobile_friendly),
+        icon: Icon(Icons.no_cell_sharp),
       ),
       SideMenuItem(
         title: 'Settings',
@@ -130,11 +142,11 @@ class _HomeScreeState extends State<HomeScree> {
         },
         icon: Icon(Icons.settings),
       ),
-      SideMenuItem(
-        title: 'Exit',
-        onTap: (_, __) {},
-        icon: Icon(Icons.exit_to_app),
-      ),
+      // SideMenuItem(
+      //   title: 'Exit',
+      //   onTap: (_, __) {},
+      //   icon: Icon(Icons.exit_to_app),
+      // ),
     ];
     return Scaffold(
         key: _key,
@@ -152,15 +164,7 @@ class _HomeScreeState extends State<HomeScree> {
               onPressed: () {
                 toggleMenu();
               }),
-          actions: [
-            IconButton(
-                onPressed: () {
-                  apiService.getSheet("cctv").then((value) {
-                    print(value);
-                  });
-                },
-                icon: const Icon(Icons.info))
-          ],
+          actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.info))],
         ),
         body: Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -168,9 +172,7 @@ class _HomeScreeState extends State<HomeScree> {
             SideMenu(
               alwaysShowFooter: true,
               style: SideMenuStyle(
-                  displayMode: isMenuOpen
-                      ? SideMenuDisplayMode.open
-                      : SideMenuDisplayMode.compact,
+                  displayMode: isMenuOpen ? SideMenuDisplayMode.open : SideMenuDisplayMode.compact,
                   decoration: BoxDecoration(),
                   openSideMenuWidth: 200,
                   compactSideMenuWidth: 50,
@@ -235,81 +237,66 @@ class _HomeScreeState extends State<HomeScree> {
                         });
                       },
                       children: [
-                        FutureBuilder<List<String>>(
-                            future: apiService.getSheet(""),
-                            builder: (context,
-                                AsyncSnapshot<List<String>> snapshot) {
-                              if (snapshot.hasData) {
-                                return DashboardScreen(
-                                  sheetList: snapshot.data!,
-                                );
-                              } else {
-                                return Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                            }),
-                        FutureBuilder<List<String>>(
-                            future: apiService.getSheet(""),
-                            builder: (context,
-                                AsyncSnapshot<List<String>> snapshot) {
-                              if (snapshot.hasData) {
-                                return GroundAssetScreen(
-                                  sheetList: snapshot.data!,
-                                );
-                              } else {
-                                return Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                            }),
                         Container(
                           child: Center(
-                            child: Text('IP Address & Port'),
+                            child: Text('Dashboard (Coming Soon!)'),
+                          ),
+                        ),
+                        InitializeContentWidget(
+                          apiServiceData: apiService.getSheet(""),
+                          contentWidget: (data) {
+                            return DashboardScreen(
+                              sheetList: data,
+                            );
+                          },
+                        ),
+                        InitializeContentWidget(
+                          apiServiceData: apiService.getSheet(""),
+                          contentWidget: (data) {
+                            return LaptopAssetScreen(
+                              sheetList: data,
+                            );
+                          },
+                        ),
+                        Container(
+                          child: Center(
+                            child: Text('Damage (Coming Soon!)'),
                           ),
                         ),
                         Container(
                           child: Center(
-                            child: Text('Damage'),
+                            child: Text('Network & IP (Coming Soon!)'),
+                          ),
+                        ),
+                        InitializeContentWidget(
+                          apiServiceData: apiService.getSheet(ApiService.cctvUrl),
+                          contentWidget: (data) {
+                            return CctvReportScreen(
+                              sheetList: data,
+                            );
+                          },
+                        ),
+                        Container(
+                          child: Center(
+                            child: Text('Repair Assets (Coming Soon!)'),
                           ),
                         ),
                         Container(
                           child: Center(
-                            child: Text('Repair'),
+                            child: Text('Maintenance Record (Coming Soon!)'),
                           ),
                         ),
-                        FutureBuilder<List<String>>(
-                            future: apiService.getSheet(ApiService.cctvUrl),
-                            builder: (context,
-                                AsyncSnapshot<List<String>> snapshot) {
-                              if (snapshot.hasData) {
-                                return CctvReportScreen(
-                                  sheetList: snapshot.data!,
-                                );
-                              } else {
-                                return Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                            }),
-                        FutureBuilder<List<String>>(
-                            future:
-                                apiService.getSheet(ApiService.mobileService),
-                            builder: (context,
-                                AsyncSnapshot<List<String>> snapshot) {
-                              if (snapshot.hasData) {
-                                return MobileServiceRecordScreen(
-                                  sheetList: snapshot.data!,
-                                );
-                              } else {
-                                return Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                            }),
+                        InitializeContentWidget(
+                          apiServiceData: apiService.getSheet(ApiService.mobileService),
+                          contentWidget: (data) {
+                            return MobileServiceRecordScreen(
+                              sheetList: data,
+                            );
+                          },
+                        ),
                         Container(
                           child: Center(
-                            child: Text('Settings'),
+                            child: Text('Settings (Coming Soon!)'),
                           ),
                         ),
                       ],
@@ -320,5 +307,31 @@ class _HomeScreeState extends State<HomeScree> {
             ),
           ],
         ));
+  }
+}
+
+class InitializeContentWidget extends StatelessWidget {
+  const InitializeContentWidget({
+    super.key,
+    required this.apiServiceData,
+    required this.contentWidget,
+  });
+
+  final Future<List<String>> apiServiceData;
+  final Widget Function(List<String>)? contentWidget;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<String>>(
+        future: apiServiceData,
+        builder: (context, AsyncSnapshot<List<String>> snapshot) {
+          if (snapshot.hasData) {
+            return contentWidget!(snapshot.data!);
+          } else {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        });
   }
 }
