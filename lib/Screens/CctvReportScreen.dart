@@ -26,7 +26,8 @@ class CctvReportScreen extends StatefulWidget {
 //SET SetCell
 //
 
-class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepAliveClientMixin {
+class _CctvReportScreenState extends State<CctvReportScreen>
+    with AutomaticKeepAliveClientMixin {
   @override
   // Implement wantKeepAlive
   bool get wantKeepAlive => true;
@@ -53,7 +54,8 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
   final Map<String, dynamic> _controllers = {};
 
   TextEditingController sheetDropdownSearchController = TextEditingController();
-  TextEditingController departmentDropdownSearchController = TextEditingController();
+  TextEditingController departmentDropdownSearchController =
+      TextEditingController();
 
   List<String> departmentList = [];
   List<String> positionList = [];
@@ -86,9 +88,39 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
     plutoColumns = List<PlutoColumn>.generate(headerList.length, (index) {
       _controllers[headerList[index]] = TextEditingController();
       if (headerList[index] == "No." || headerList[index] == "ID") {
-        return PlutoColumn(width: 50, minWidth: 45, backgroundColor: Colors.black12, textAlign: PlutoColumnTextAlign.center, title: headerList[index], field: headerList[index], hide: headerList[index] == "ID" ? showHideHeaderList[index][headerList[index]] : !showHideHeaderList[index][headerList[index]], type: PlutoColumnType.text());
+        return PlutoColumn(
+            width: 50,
+            minWidth: 45,
+            backgroundColor: Colors.black12,
+            textAlign: PlutoColumnTextAlign.center,
+            title: headerList[index],
+            field: headerList[index],
+            hide: headerList[index] == "ID"
+                ? showHideHeaderList[index][headerList[index]]
+                : !showHideHeaderList[index][headerList[index]],
+            type: PlutoColumnType.text());
+      } else if (headerList[index] == "Date" ||
+          headerList[index] == "Finished Date") {
+        return PlutoColumn(
+          width: 100,
+          minWidth: 45,
+          backgroundColor: Colors.black12,
+          textAlign: PlutoColumnTextAlign.center,
+          title: headerList[index],
+          field: headerList[index],
+          hide: headerList[index] == "ID"
+              ? showHideHeaderList[index][headerList[index]]
+              : !showHideHeaderList[index][headerList[index]],
+          type: PlutoColumnType.date(format: "dd-MM-yyyy"),
+        );
       } else {
-        return PlutoColumn(backgroundColor: Colors.black12, textAlign: PlutoColumnTextAlign.center, title: headerList[index], field: headerList[index], hide: !showHideHeaderList[index][headerList[index]], type: PlutoColumnType.text());
+        return PlutoColumn(
+            backgroundColor: Colors.black12,
+            textAlign: PlutoColumnTextAlign.center,
+            title: headerList[index],
+            field: headerList[index],
+            hide: !showHideHeaderList[index][headerList[index]],
+            type: PlutoColumnType.text());
       }
     });
     return plutoColumns;
@@ -125,7 +157,10 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
   //Get OptionalValue
   Future<List<String>> getOptionalValue(String selector) async {
     List<String> optionaList = [];
-    await apiService.getHeader("https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=optional").then((optionalItems) {
+    await apiService
+        .getHeader(
+            "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=optional")
+        .then((optionalItems) {
       // if (selector != "Location") {
       //   optionaList.add('Select All');
       // }
@@ -143,7 +178,9 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
   //Get HeadeValues ---<URL>
   Future<List<String>> getHeaderValues(String sheetName) async {
     headerList.clear();
-    await apiService.getHeader("${ApiService.cctvUrl}request_type=2&sheet=$sheetName").then((headers) {
+    await apiService
+        .getHeader("${ApiService.cctvUrl}request_type=2&sheet=$sheetName")
+        .then((headers) {
       for (var header in headers) {
         setState(() {
           headerList.add('$header');
@@ -154,8 +191,12 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
   }
 
   //Get CellValues ---<URL>
-  Future<List<Map<String, dynamic>>> getCellValues(String sheetName, {String filterColumn = "", String filterValue = ""}) async {
-    await apiService.fetchData(hostUrl: ApiService.cctvUrl, requestType: "1", sheet: sheetName).then((cells) {
+  Future<List<Map<String, dynamic>>> getCellValues(String sheetName,
+      {String filterColumn = "", String filterValue = ""}) async {
+    await apiService
+        .fetchData(
+            hostUrl: ApiService.cctvUrl, requestType: "1", sheet: sheetName)
+        .then((cells) {
       sheetRowCount = cells.length;
       cellsList.clear();
       if (filterColumn.isNotEmpty && filterValue != 'Select All') {
@@ -181,7 +222,8 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
   }
 
   //Get FilterCells
-  Future<List<Map<String, dynamic>>> getFilterCells(String filterColum, String filterValue, List<Map<String, dynamic>> dataList) async {
+  Future<List<Map<String, dynamic>>> getFilterCells(String filterColum,
+      String filterValue, List<Map<String, dynamic>> dataList) async {
     List<Map<String, dynamic>> responseDataList = [];
     for (var datas in dataList) {
       Map<String, dynamic> cellData = {};
@@ -232,121 +274,143 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
         context: context,
         builder: (BuildContext ctx) {
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(builder: (ctx, size) {
               return Container(
                 padding: const EdgeInsets.all(15),
                 width: 400,
                 height: MediaQuery.of(context).size.height / 1.1,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(0)),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Center(
-                        child: Text(
-                      "Add new purchased item",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    )),
-                    Column(
-                      children: List.generate(headerList.length, (index) {
-                        if (headerList[index] == "No.") {
-                          _controllers[headerList[index]]!.text = "${sheetRowCount + 1}";
-                          return ListTile(
-                            title: const Text("ROW ID"),
-                            subtitle: TextFormField(
-                              enabled: false,
-                              controller: _controllers[headerList[index]],
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: const BorderSide(width: 0.5),
-                                ),
-                                hintText: headerList[index],
-                              ),
-                            ),
-                          );
-                        } else if (headerList[index] == "ID") {
-                          return ListTile(
-                            title: const Text("UUID"),
-                            subtitle: TextFormField(
-                              enabled: false,
-                              controller: _controllers[headerList[index]],
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: const BorderSide(width: 0.5),
-                                ),
-                                hintText: headerList[index],
-                              ),
-                            ),
-                          );
-                        } else {
-                          _controllers[headerList[index]]!.text = "";
-                          return ListTile(
-                            title: Text(
-                              headerList[index],
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: headerList[index] == "Position" || headerList[index] == "Location" || headerList[index] == "Department" || headerList[index] == "Position" || headerList[index] == "Type"
-                                ? CustomDropdownSearch(
-                                    itemList: setList(headerList[index]),
-                                    lable: headerList[index],
-                                    onChange: (selectedItem) {
-                                      _controllers[headerList[index]].text = selectedItem;
-                                    },
-                                  )
-                                : TextFormField(
-                                    controller: _controllers[headerList[index]],
-                                    decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(4),
-                                        borderSide: const BorderSide(width: 0.5),
-                                      ),
-                                      hintText: headerList[index],
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Center(
+                            child: Text(
+                          "Add new purchased item",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        )),
+                        Column(
+                          children: List.generate(headerList.length, (index) {
+                            if (headerList[index] == "No.") {
+                              _controllers[headerList[index]]!.text =
+                                  "${sheetRowCount + 1}";
+                              return ListTile(
+                                title: const Text("ROW ID"),
+                                subtitle: TextFormField(
+                                  enabled: false,
+                                  controller: _controllers[headerList[index]],
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                      borderSide: const BorderSide(width: 0.5),
                                     ),
+                                    hintText: headerList[index],
                                   ),
-                          );
-                        }
-                      }),
-                    ),
-                    const SizedBox(height: 20),
-                    Center(
-                      child: Wrap(
-                        spacing: 10,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(ctx, null);
-                            },
-                            child: const Text('Cancel.'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              _controllers.forEach((editKey, editController) {
-                                dataList.add(editController.value!.text);
-                                rowList.add(PlutoRow(cells: {}));
-                              });
-                              Navigator.pop(ctx, dataList);
-                            },
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                Colors.blue,
+                                ),
+                              );
+                            } else if (headerList[index] == "ID") {
+                              return ListTile(
+                                title: const Text("UUID"),
+                                subtitle: TextFormField(
+                                  enabled: false,
+                                  controller: _controllers[headerList[index]],
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                      borderSide: const BorderSide(width: 0.5),
+                                    ),
+                                    hintText: headerList[index],
+                                  ),
+                                ),
+                              );
+                            } else {
+                              _controllers[headerList[index]]!.text = "";
+                              return ListTile(
+                                title: Text(
+                                  headerList[index],
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: headerList[index] == "Position" ||
+                                        headerList[index] == "Location" ||
+                                        headerList[index] == "Department" ||
+                                        headerList[index] == "Position" ||
+                                        headerList[index] == "Type"
+                                    ? CustomDropdownSearch(
+                                        itemList: setList(headerList[index]),
+                                        lable: headerList[index],
+                                        onChange: (selectedItem) {
+                                          _controllers[headerList[index]].text =
+                                              selectedItem;
+                                        },
+                                      )
+                                    : TextFormField(
+                                        controller:
+                                            _controllers[headerList[index]],
+                                        decoration: InputDecoration(
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 4, vertical: 0),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            borderSide:
+                                                const BorderSide(width: 0.5),
+                                          ),
+                                          hintText: headerList[index],
+                                        ),
+                                      ),
+                              );
+                            }
+                          }),
+                        ),
+                        const SizedBox(height: 20),
+                        Center(
+                          child: Wrap(
+                            spacing: 10,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx, null);
+                                },
+                                child: const Text('Cancel.'),
                               ),
-                            ),
-                            child: const Text(
-                              'Update.',
-                              style: TextStyle(
-                                color: Colors.white,
+                              ElevatedButton(
+                                onPressed: () {
+                                  _controllers
+                                      .forEach((editKey, editController) {
+                                    dataList.add(editController.value!.text);
+                                    rowList.add(PlutoRow(cells: {}));
+                                  });
+                                  Navigator.pop(ctx, dataList);
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                    Colors.blue,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Update.',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ]),
+                        ),
+                      ]),
                 ),
               );
             }),
@@ -368,7 +432,14 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
       return;
     } else {
       //SET ---<URL>
-      await apiService.fetchData(hostUrl: ApiService.cctvUrl, sheet: selectedYear, requestType: "3", row: (int.parse(data[0]) + 1).toString(), data: "${data.join(',')}").then((response) {
+      await apiService
+          .fetchData(
+              hostUrl: ApiService.cctvUrl,
+              sheet: selectedYear,
+              requestType: "3",
+              row: (int.parse(data[0]) + 1).toString(),
+              data: "${data.join(',')}")
+          .then((response) {
         stateManager.appendRows(rowList);
         stateManager.setShowLoading(false);
       });
@@ -383,14 +454,16 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
         context: context,
         builder: (BuildContext ctx) {
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(
               builder: (ctx, size) {
                 return Container(
                   padding: const EdgeInsets.all(15),
                   width: 400,
                   height: MediaQuery.of(context).size.height / 1.1,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                  decoration:
+                      BoxDecoration(borderRadius: BorderRadius.circular(0)),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: Column(
@@ -401,24 +474,34 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                           _controllers[e.key]!.text = e.value.value.toString();
                           if (e.key.isNotEmpty && e.key != "No.") {
                             return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 0),
                               child: ListTile(
                                 title: Text(e.key),
-                                subtitle: e.key == "Position" || e.key == "Location" || e.key == "Department" || e.key == "Position" || e.key == "Type"
+                                subtitle: e.key == "Position" ||
+                                        e.key == "Location" ||
+                                        e.key == "Department" ||
+                                        e.key == "Position" ||
+                                        e.key == "Type"
                                     ? CustomDropdownSearch(
                                         itemList: setList(e.key),
                                         lable: e.value.value.toString(),
                                         onChange: (selectedItem) {
-                                          _controllers[e.key].text = "$selectedItem";
+                                          _controllers[e.key].text =
+                                              "$selectedItem";
                                         },
                                       )
                                     : TextFormField(
                                         controller: _controllers[e.key],
                                         decoration: InputDecoration(
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 4, vertical: 0),
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(4),
-                                            borderSide: const BorderSide(width: 0.5),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            borderSide:
+                                                const BorderSide(width: 0.5),
                                           ),
                                           hintText: e.key,
                                         ),
@@ -426,7 +509,8 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                               ),
                             );
                           } else {
-                            return Text('Row နံပါတ် (${e.value.value}) ကို Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
+                            return Text(
+                                'Row နံပါတ် (${e.value.value}) ကို Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
                           }
                         }).toList(),
                         const SizedBox(height: 20),
@@ -442,13 +526,15 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                               ),
                               ElevatedButton(
                                 onPressed: () {
-                                  _controllers.forEach((editKey, editController) {
+                                  _controllers
+                                      .forEach((editKey, editController) {
                                     data.add(editController.value!.text);
                                   });
                                   Navigator.pop(ctx, _controllers);
                                 },
                                 style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
                                     Colors.blue,
                                   ),
                                 ),
@@ -477,7 +563,14 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
       return;
     } else {
       //SET ---<URL>
-      await apiService.fetchData(hostUrl: ApiService.cctvUrl, sheet: selectedYear, requestType: "3", row: (int.parse(value[headerList[0]]!.text) + 1).toString(), data: data.join(',')).then((response) {
+      await apiService
+          .fetchData(
+              hostUrl: ApiService.cctvUrl,
+              sheet: selectedYear,
+              requestType: "3",
+              row: (int.parse(value[headerList[0]]!.text) + 1).toString(),
+              data: data.join(','))
+          .then((response) {
         row!.cells.forEach((key, val) {
           stateManager.changeCellValue(
             stateManager.currentRow!.cells[key]!,
@@ -499,7 +592,8 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
           final dataController = TextEditingController();
 
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(
               builder: (ctx, size) {
                 dataController.text = cell!.value.toString();
@@ -507,7 +601,8 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                 return Container(
                   padding: const EdgeInsets.all(15),
                   width: 300,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                  decoration:
+                      BoxDecoration(borderRadius: BorderRadius.circular(0)),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: Column(
@@ -515,10 +610,14 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                       children: [
                         const SizedBox(height: 20),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
                           child: ListTile(
                             title: Text(cell.column.title),
-                            subtitle: cell.column.title == "Location" || cell.column.title == "Position" || cell.column.title == "Department" || cell.column.title == "Type"
+                            subtitle: cell.column.title == "Location" ||
+                                    cell.column.title == "Position" ||
+                                    cell.column.title == "Department" ||
+                                    cell.column.title == "Type"
                                 ? CustomDropdownSearch(
                                     itemList: setList(cell.column.title),
                                     lable: cell.value.toString(),
@@ -529,10 +628,13 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                                 : TextFormField(
                                     controller: dataController,
                                     decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 4, vertical: 0),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(4),
-                                        borderSide: const BorderSide(width: 0.5),
+                                        borderSide:
+                                            const BorderSide(width: 0.5),
                                       ),
                                     ),
                                   ),
@@ -557,12 +659,15 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                                       data['column'] = i + 1;
                                     }
                                   }
-                                  data['row'] = (cell.row.cells[headerList[0]]!.value) + 1;
+                                  data['row'] =
+                                      (cell.row.cells[headerList[0]]!.value) +
+                                          1;
                                   data['value'] = dataController.text;
                                   Navigator.pop(ctx, data);
                                 },
                                 style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
                                     Colors.blue,
                                   ),
                                 ),
@@ -640,11 +745,13 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
   void exportToCsv() async {
     String title = "pluto_grid_export";
 
-    var exported = const Utf8Encoder().convert(pluto_grid_export.PlutoGridExport.exportCSV(stateManager));
+    var exported = const Utf8Encoder()
+        .convert(pluto_grid_export.PlutoGridExport.exportCSV(stateManager));
     DateTime now = DateTime.now();
     String dateTimeFormat = DateFormat('dd-MM-yyyy_hh:mm').format(now);
     // use file_saver from pub.dev
-    await FileSaver.instance.saveFile(name: "${title}_$dateTimeFormat", ext: "csv", bytes: exported);
+    await FileSaver.instance.saveFile(
+        name: "${title}_$dateTimeFormat", ext: "csv", bytes: exported);
   }
 
   //INITIALIZE
@@ -693,7 +800,8 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                           onLoaded: (event) {
                             event.stateManager.setShowColumnFilter(true);
                             stateManager = event.stateManager;
-                            stateManager.setSelectingMode(PlutoGridSelectingMode.row);
+                            stateManager
+                                .setSelectingMode(PlutoGridSelectingMode.row);
                             stateManager.setFilter((element) => true);
                             // for (PlutoColumn col in plutoColumns) {
                             //   stateManager.autoFitColumn(context, col);
@@ -714,7 +822,8 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                             return Padding(
                               padding: const EdgeInsets.all(4),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   //Choose Location
                                   CustomDropdownSearch(
@@ -731,13 +840,16 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                                       });
                                       getCellValues(selectedYear).then(
                                         (cells) {
-                                          getHeaderValues(selectedYear).then((headers) {
+                                          getHeaderValues(selectedYear)
+                                              .then((headers) {
                                             for (var header in headerList) {
-                                              showHideHeaderList.add({header: true});
+                                              showHideHeaderList
+                                                  .add({header: true});
                                             }
                                             setState(() {
                                               if (selectedYear.isNotEmpty) {
-                                                stateManager.setShowLoading(false);
+                                                stateManager
+                                                    .setShowLoading(false);
                                               }
                                             });
                                           });
@@ -756,19 +868,44 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                                             builder: (context) {
                                               return Expanded(
                                                 child: SizedBox(
-                                                  width: MediaQuery.of(context).size.width / 3,
-                                                  child: StatefulBuilder(builder: (context, onState) {
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width /
+                                                      3,
+                                                  child: StatefulBuilder(
+                                                      builder:
+                                                          (context, onState) {
                                                     return ListView.builder(
-                                                      itemCount: headerList.length,
-                                                      itemBuilder: (context, index) {
+                                                      itemCount:
+                                                          headerList.length,
+                                                      itemBuilder:
+                                                          (context, index) {
                                                         return ListTile(
-                                                          title: Text(headerList[index]),
+                                                          title: Text(
+                                                              headerList[
+                                                                  index]),
                                                           leading: Checkbox(
-                                                              value: showHideHeaderList[index][headerList[index]],
-                                                              onChanged: (status) {
+                                                              value: showHideHeaderList[
+                                                                      index][
+                                                                  headerList[
+                                                                      index]],
+                                                              onChanged:
+                                                                  (status) {
                                                                 onState(() {
-                                                                  showHideHeaderList[index][headerList[index]] = status!;
-                                                                  stateManager.hideColumn(plutoColumns[index], status == true ? false : true, notify: true);
+                                                                  showHideHeaderList[
+                                                                          index]
+                                                                      [
+                                                                      headerList[
+                                                                          index]] = status!;
+                                                                  stateManager.hideColumn(
+                                                                      plutoColumns[
+                                                                          index],
+                                                                      status ==
+                                                                              true
+                                                                          ? false
+                                                                          : true,
+                                                                      notify:
+                                                                          true);
                                                                 });
                                                               }),
                                                         );
@@ -778,17 +915,24 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                                                 ),
                                               );
                                             },
-                                          ), title: "Filter Columns", topActions: [
-                                            SizedBox(
-                                              width: 200,
-                                              child: SizedBox(
-                                                child: ListTile(
-                                                  trailing: Checkbox(onChanged: (status) {}, value: true),
-                                                  title: const Text("Select All"),
+                                          ),
+                                              title: "Filter Columns",
+                                              topActions: [
+                                                SizedBox(
+                                                  width: 200,
+                                                  child: SizedBox(
+                                                    child: ListTile(
+                                                      trailing: Checkbox(
+                                                          onChanged:
+                                                              (status) {},
+                                                          value: true),
+                                                      title: const Text(
+                                                          "Select All"),
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
-                                          ], bottomActions: []);
+                                              ],
+                                              bottomActions: []);
                                         },
                                       ),
                                       //Add Row
@@ -816,7 +960,10 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                             return Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(width: MediaQuery.of(context).size.width / 2, child: PlutoPagination(stateManager)),
+                                Container(
+                                    width:
+                                        MediaQuery.of(context).size.width / 2,
+                                    child: PlutoPagination(stateManager)),
                                 Text("Total Rows : $sheetRowCount"),
                               ],
                             );
@@ -842,7 +989,8 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                             ),
                           ),
                           columns: setColum(),
-                          rows: List<PlutoRow>.generate(cellsList.length, (index) {
+                          rows: List<PlutoRow>.generate(cellsList.length,
+                              (index) {
                             Map<String, PlutoCell> cells = {};
                             for (var header in headerList) {
                               if (header == "No.") {
@@ -852,7 +1000,8 @@ class _CctvReportScreenState extends State<CctvReportScreen> with AutomaticKeepA
                                   value: "*****",
                                 );
                               } else {
-                                cells[header] = PlutoCell(value: cellsList[index][header]);
+                                cells[header] =
+                                    PlutoCell(value: cellsList[index][header]);
                               }
                             }
                             PlutoRow row = PlutoRow(cells: cells);
