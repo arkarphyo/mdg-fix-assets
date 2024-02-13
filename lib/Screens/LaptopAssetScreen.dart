@@ -26,7 +26,8 @@ class LaptopAssetScreen extends StatefulWidget {
   State<LaptopAssetScreen> createState() => _LaptopAssetScreenState();
 }
 
-class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKeepAliveClientMixin {
+class _LaptopAssetScreenState extends State<LaptopAssetScreen>
+    with AutomaticKeepAliveClientMixin {
   @override
   // TODO: implement wantKeepAlive
   bool get wantKeepAlive => true;
@@ -51,7 +52,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
   Map<String, dynamic> _controllers = {};
 
   TextEditingController sheetDropdownSearchController = TextEditingController();
-  TextEditingController departmentDropdownSearchController = TextEditingController();
+  TextEditingController departmentDropdownSearchController =
+      TextEditingController();
 
   List<String> departmentList = [];
   List<String> positionList = [];
@@ -86,9 +88,25 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
     return List<PlutoColumn>.generate(headerList.length, (index) {
       _controllers[headerList[index]] = TextEditingController();
       if (headerList[index] == "No." || headerList[index] == "ID") {
-        return PlutoColumn(width: 50, minWidth: 45, backgroundColor: Colors.black12, textAlign: PlutoColumnTextAlign.center, title: headerList[index], field: headerList[index], hide: headerList[index] == "ID" ? showHideHeaderList[index][headerList[index]] : !showHideHeaderList[index][headerList[index]], type: PlutoColumnType.text());
+        return PlutoColumn(
+            width: 50,
+            minWidth: 45,
+            backgroundColor: Colors.black12,
+            textAlign: PlutoColumnTextAlign.center,
+            title: headerList[index],
+            field: headerList[index],
+            hide: headerList[index] == "ID"
+                ? showHideHeaderList[index][headerList[index]]
+                : !showHideHeaderList[index][headerList[index]],
+            type: PlutoColumnType.text());
       } else {
-        return PlutoColumn(backgroundColor: Colors.black12, textAlign: PlutoColumnTextAlign.center, title: headerList[index], field: headerList[index], hide: !showHideHeaderList[index][headerList[index]], type: PlutoColumnType.text());
+        return PlutoColumn(
+            backgroundColor: Colors.black12,
+            textAlign: PlutoColumnTextAlign.center,
+            title: headerList[index],
+            field: headerList[index],
+            hide: !showHideHeaderList[index][headerList[index]],
+            type: PlutoColumnType.text());
       }
     });
   }
@@ -120,7 +138,10 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
 
   Future<List<String>> getOptionalValue(String selector) async {
     List<String> optionaList = [];
-    await apiService.getHeader("https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=optional").then((optionalItems) {
+    await apiService
+        .getHeader(
+            "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=1&sheet=optional")
+        .then((optionalItems) {
       // if (selector != "Location") {
       //   optionaList.add('Select All');
       // }
@@ -138,7 +159,10 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
 
   Future<List<String>> getHeaderValues(String sheetName) async {
     headerList.clear();
-    await apiService.getHeader("https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=2&sheet=$sheetName").then((headers) {
+    await apiService
+        .getHeader(
+            "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=2&sheet=$sheetName")
+        .then((headers) {
       headers.forEach((header) {
         setState(() {
           headerList.add('$header');
@@ -148,8 +172,11 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
     return headerList;
   }
 
-  Future<List<Map<String, dynamic>>> getCellValues(String sheetName, {String filterColumn = "", String filterValue = ""}) async {
-    await apiService.fetchData(requestType: "1", sheet: sheetName).then((cells) {
+  Future<List<Map<String, dynamic>>> getCellValues(String sheetName,
+      {String filterColumn = "", String filterValue = ""}) async {
+    await apiService
+        .fetchData(requestType: "1", sheet: sheetName)
+        .then((cells) {
       sheetRowCount = cells.length;
       cellsList.clear();
       if (filterColumn.isNotEmpty && filterValue != 'Select All') {
@@ -175,7 +202,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
     return cellsList;
   }
 
-  Future<List<Map<String, dynamic>>> getFilterCells(String filterColum, String filterValue, List<Map<String, dynamic>> dataList) async {
+  Future<List<Map<String, dynamic>>> getFilterCells(String filterColum,
+      String filterValue, List<Map<String, dynamic>> dataList) async {
     List<Map<String, dynamic>> responseDataList = [];
     dataList.forEach((data) {
       Map<String, dynamic> cellData = {};
@@ -194,7 +222,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
 
   List<String> getFilterValue(String headerName, String responseValue) {
     List<String> filterList = [];
-    List<Map<String, dynamic>> filterData = utilService.removeDuplicates(cellsList, "$headerName");
+    List<Map<String, dynamic>> filterData =
+        utilService.removeDuplicates(cellsList, "$headerName");
     filterData.forEach((filterValue) {
       filterList.add(filterValue[responseValue]);
     });
@@ -222,124 +251,145 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
         context: context,
         builder: (BuildContext ctx) {
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(builder: (ctx, size) {
               return Container(
                 padding: const EdgeInsets.all(15),
                 width: 400,
                 height: MediaQuery.of(context).size.height / 1.1,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(0)),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Center(
-                        child: Text(
-                      "Add new purchased item",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    )),
-                    Column(
-                      children: List.generate(headerList.length, (index) {
-                        if (headerList[index] == "No.") {
-                          _controllers[headerList[index]]!.text = "${sheetRowCount + 1}";
-                          return ListTile(
-                            title: Text("ROW ID"),
-                            subtitle: TextFormField(
-                              enabled: false,
-                              controller: _controllers[headerList[index]],
-                              decoration: InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(width: 0.5),
-                                ),
-                                hintText: headerList[index],
-                              ),
-                            ),
-                          );
-                        } else if (headerList[index] == "ID") {
-                          return ListTile(
-                            title: Text("UUID"),
-                            subtitle: TextFormField(
-                              enabled: false,
-                              controller: _controllers[headerList[index]],
-                              decoration: InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(width: 0.5),
-                                ),
-                                hintText: headerList[index],
-                              ),
-                            ),
-                          );
-                        } else {
-                          _controllers[headerList[index]]!.text = "";
-                          return ListTile(
-                            title: Text(
-                              headerList[index],
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: headerList[index] == "Position" || headerList[index] == "Location" || headerList[index] == "Department" || headerList[index] == "Position" || headerList[index] == "Type"
-                                ? CustomDropdownSearch(
-                                    itemList: setList(headerList[index]),
-                                    lable: headerList[index],
-                                    onChange: (selectedItem) {
-                                      _controllers[headerList[index]].text = selectedItem;
-                                      print(_controllers[headerList[index]].text);
-                                    },
-                                  )
-                                : TextFormField(
-                                    controller: _controllers[headerList[index]],
-                                    decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(4),
-                                        borderSide: BorderSide(width: 0.5),
-                                      ),
-                                      hintText: headerList[index],
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                            child: Text(
+                          "Add new purchased item",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        )),
+                        Column(
+                          children: List.generate(headerList.length, (index) {
+                            if (headerList[index] == "No.") {
+                              _controllers[headerList[index]]!.text =
+                                  "${sheetRowCount + 1}";
+                              return ListTile(
+                                title: Text("ROW ID"),
+                                subtitle: TextFormField(
+                                  enabled: false,
+                                  controller: _controllers[headerList[index]],
+                                  decoration: InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                      borderSide: BorderSide(width: 0.5),
                                     ),
+                                    hintText: headerList[index],
                                   ),
-                          );
-                        }
-                      }),
-                    ),
-                    const SizedBox(height: 20),
-                    Center(
-                      child: Wrap(
-                        spacing: 10,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(ctx, null);
-                            },
-                            child: const Text('Cancel.'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              _controllers.forEach((editKey, editController) {
-                                dataList.add(editController.value!.text);
-                                _rowList.add(PlutoRow(cells: {}));
-                                print(editController.value!.text);
-                              });
-                              print("Data : ${dataList.join(",")}");
-                              Navigator.pop(ctx, dataList);
-                            },
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                Colors.blue,
+                                ),
+                              );
+                            } else if (headerList[index] == "ID") {
+                              return ListTile(
+                                title: Text("UUID"),
+                                subtitle: TextFormField(
+                                  enabled: false,
+                                  controller: _controllers[headerList[index]],
+                                  decoration: InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                      borderSide: BorderSide(width: 0.5),
+                                    ),
+                                    hintText: headerList[index],
+                                  ),
+                                ),
+                              );
+                            } else {
+                              _controllers[headerList[index]]!.text = "";
+                              return ListTile(
+                                title: Text(
+                                  headerList[index],
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: headerList[index] == "Position" ||
+                                        headerList[index] == "Location" ||
+                                        headerList[index] == "Department" ||
+                                        headerList[index] == "Position" ||
+                                        headerList[index] == "Type"
+                                    ? CustomDropdownSearch(
+                                        itemList: setList(headerList[index]),
+                                        lable: headerList[index],
+                                        onChange: (selectedItem) {
+                                          _controllers[headerList[index]].text =
+                                              selectedItem;
+                                          print(_controllers[headerList[index]]
+                                              .text);
+                                        },
+                                      )
+                                    : TextFormField(
+                                        controller:
+                                            _controllers[headerList[index]],
+                                        decoration: InputDecoration(
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 4, vertical: 0),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            borderSide: BorderSide(width: 0.5),
+                                          ),
+                                          hintText: headerList[index],
+                                        ),
+                                      ),
+                              );
+                            }
+                          }),
+                        ),
+                        const SizedBox(height: 20),
+                        Center(
+                          child: Wrap(
+                            spacing: 10,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx, null);
+                                },
+                                child: const Text('Cancel.'),
                               ),
-                            ),
-                            child: const Text(
-                              'Update.',
-                              style: TextStyle(
-                                color: Colors.white,
+                              ElevatedButton(
+                                onPressed: () {
+                                  _controllers
+                                      .forEach((editKey, editController) {
+                                    dataList.add(editController.value!.text);
+                                    _rowList.add(PlutoRow(cells: {}));
+                                    print(editController.value!.text);
+                                  });
+                                  print("Data : ${dataList.join(",")}");
+                                  Navigator.pop(ctx, dataList);
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                    Colors.blue,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Update.',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ]),
+                        ),
+                      ]),
                 ),
               );
             }),
@@ -363,7 +413,13 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
       stateManager.setShowLoading(false);
       return;
     } else {
-      await apiService.fetchData(sheet: selectedBranch, requestType: "3", row: (int.parse(_data[0]) + 1).toString(), data: "${_data.join(',')}").then((response) {
+      await apiService
+          .fetchData(
+              sheet: selectedBranch,
+              requestType: "3",
+              row: (int.parse(_data[0]) + 1).toString(),
+              data: "${_data.join(',')}")
+          .then((response) {
         stateManager.appendRows(_rowList);
         stateManager.setShowLoading(false);
       });
@@ -378,14 +434,16 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
         context: context,
         builder: (BuildContext ctx) {
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(
               builder: (ctx, size) {
                 return Container(
                   padding: const EdgeInsets.all(15),
                   width: 400,
                   height: MediaQuery.of(context).size.height / 1.1,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                  decoration:
+                      BoxDecoration(borderRadius: BorderRadius.circular(0)),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: Column(
@@ -396,24 +454,32 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                           _controllers[e.key]!.text = e.value.value.toString();
                           if (e.key.isNotEmpty && e.key != "No.") {
                             return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 0),
                               child: ListTile(
                                 title: Text(e.key),
-                                subtitle: e.key == "Position" || e.key == "Location" || e.key == "Department" || e.key == "Position" || e.key == "Type"
+                                subtitle: e.key == "Position" ||
+                                        e.key == "Location" ||
+                                        e.key == "Department" ||
+                                        e.key == "Position" ||
+                                        e.key == "Type"
                                     ? CustomDropdownSearch(
                                         itemList: setList(e.key),
                                         lable: e.value.value.toString(),
                                         onChange: (selectedItem) {
-                                          _controllers[e.key].text = "$selectedItem";
+                                          _controllers[e.key].text =
+                                              "$selectedItem";
                                           print(_controllers[e.key].text);
                                         },
                                       )
                                     : TextFormField(
                                         controller: _controllers[e.key],
                                         decoration: InputDecoration(
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 4, vertical: 0),
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(4),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
                                             borderSide: BorderSide(width: 0.5),
                                           ),
                                           hintText: e.key,
@@ -422,7 +488,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                               ),
                             );
                           } else {
-                            return Text('Row နံပါတ် (${e.value.value}) ကို Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
+                            return Text(
+                                'Row နံပါတ် (${e.value.value}) ကို Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
                           }
                         }).toList(),
                         const SizedBox(height: 20),
@@ -438,7 +505,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                               ),
                               ElevatedButton(
                                 onPressed: () {
-                                  _controllers.forEach((editKey, editController) {
+                                  _controllers
+                                      .forEach((editKey, editController) {
                                     _data.add(editController.value!.text);
                                     print(editController.value!.text);
                                   });
@@ -446,7 +514,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                                   Navigator.pop(ctx, _controllers);
                                 },
                                 style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
                                     Colors.blue,
                                   ),
                                 ),
@@ -474,7 +543,13 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
       stateManager.setShowLoading(false);
       return;
     } else {
-      await apiService.fetchData(sheet: selectedBranch, requestType: "3", row: (int.parse(value[headerList[0]]!.text) + 1).toString(), data: "${_data.join(',')}").then((response) {
+      await apiService
+          .fetchData(
+              sheet: selectedBranch,
+              requestType: "3",
+              row: (int.parse(value[headerList[0]]!.text) + 1).toString(),
+              data: "${_data.join(',')}")
+          .then((response) {
         row!.cells.forEach((key, val) {
           stateManager.changeCellValue(
             stateManager.currentRow!.cells[key]!,
@@ -496,7 +571,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
           final _dataController = TextEditingController();
 
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             child: LayoutBuilder(
               builder: (ctx, size) {
                 _dataController.text = cell!.value.toString();
@@ -504,7 +580,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                 return Container(
                   padding: const EdgeInsets.all(15),
                   width: 300,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                  decoration:
+                      BoxDecoration(borderRadius: BorderRadius.circular(0)),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: Column(
@@ -512,10 +589,14 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                       children: [
                         const SizedBox(height: 20),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
                           child: ListTile(
                             title: Text(cell!.column.title),
-                            subtitle: cell!.column.title == "Location" || cell!.column.title == "Position" || cell!.column.title == "Department" || cell!.column.title == "Type"
+                            subtitle: cell!.column.title == "Location" ||
+                                    cell!.column.title == "Position" ||
+                                    cell!.column.title == "Department" ||
+                                    cell!.column.title == "Type"
                                 ? CustomDropdownSearch(
                                     itemList: setList(cell!.column.title),
                                     lable: cell.value.toString(),
@@ -526,7 +607,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                                 : TextFormField(
                                     controller: _dataController,
                                     decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 4, vertical: 0),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(4),
                                         borderSide: BorderSide(width: 0.5),
@@ -554,12 +636,15 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                                       data['column'] = i + 1;
                                     }
                                   }
-                                  data['row'] = (cell!.row.cells[headerList[0]]!.value) + 1;
+                                  data['row'] =
+                                      (cell!.row.cells[headerList[0]]!.value) +
+                                          1;
                                   data['value'] = _dataController.text;
                                   Navigator.pop(ctx, data);
                                 },
                                 style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
                                     Colors.blue,
                                   ),
                                 ),
@@ -634,13 +719,15 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
 
   //Export CSV
   void exportToCsv() async {
-    String title = "pluto_grid_export";
+    String title = "LAPTOP-Report-";
 
-    var exported = const Utf8Encoder().convert(pluto_grid_export.PlutoGridExport.exportCSV(stateManager));
+    var exported = const Utf8Encoder()
+        .convert(pluto_grid_export.PlutoGridExport.exportCSV(stateManager));
     DateTime now = DateTime.now();
     String dateTimeFormat = DateFormat('dd-MM-yyyy_hh:mm').format(now);
     // use file_saver from pub.dev
-    await FileSaver.instance.saveFile(name: "${title}_$dateTimeFormat", ext: "csv", bytes: exported);
+    await FileSaver.instance.saveFile(
+        name: "${title}_$dateTimeFormat", ext: "csv", bytes: exported);
   }
 
   @override
@@ -683,7 +770,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                           onLoaded: (event) {
                             event.stateManager.setShowColumnFilter(true);
                             stateManager = event.stateManager;
-                            stateManager.setSelectingMode(PlutoGridSelectingMode.row);
+                            stateManager
+                                .setSelectingMode(PlutoGridSelectingMode.row);
                           },
                           onChanged: (PlutoGridOnChangedEvent event) {
                             print(event);
@@ -702,7 +790,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                             return Padding(
                               padding: const EdgeInsets.all(4),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Container(
                                     child: Text("Total Rows : $sheetRowCount"),
@@ -712,38 +801,38 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
                                         //Choose Location
-                                        CustomDropdownSearch(
-                                          width: 6,
-                                          lable: selectedBranch,
-                                          itemList: branchList,
-                                          onChange: (selectedItem) {
-                                            print("Branch : $selectedItem");
-                                            setState(() {
-                                              if (selectedBranch.isNotEmpty) {
-                                                stateManager.setShowLoading(true);
-                                              }
-                                              selectedBranch = selectedItem!;
-                                              processInfo = "Processing...";
-                                            });
-                                            getCellValues(selectedBranch!).then(
-                                              (cells) {
-                                                getHeaderValues(selectedBranch!).then((headers) {
-                                                  headerList.forEach((header) {
-                                                    showHideHeaderList.add({header: true});
-                                                  });
-                                                  setState(() {
-                                                    if (selectedBranch.isNotEmpty) {
-                                                      stateManager.setShowLoading(false);
-                                                    }
+                                        // CustomDropdownSearch(
+                                        //   width: 6,
+                                        //   lable: selectedBranch,
+                                        //   itemList: branchList,
+                                        //   onChange: (selectedItem) {
+                                        //     print("Branch : $selectedItem");
+                                        //     setState(() {
+                                        //       if (selectedBranch.isNotEmpty) {
+                                        //         stateManager.setShowLoading(true);
+                                        //       }
+                                        //       selectedBranch = selectedItem!;
+                                        //       processInfo = "Processing...";
+                                        //     });
+                                        //     getCellValues(selectedBranch!).then(
+                                        //       (cells) {
+                                        //         getHeaderValues(selectedBranch!).then((headers) {
+                                        //           headerList.forEach((header) {
+                                        //             showHideHeaderList.add({header: true});
+                                        //           });
+                                        //           setState(() {
+                                        //             if (selectedBranch.isNotEmpty) {
+                                        //               stateManager.setShowLoading(false);
+                                        //             }
 
-                                                    print(showHideHeaderList[0]);
-                                                    print("SHEET : ${selectedBranch}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
-                                                  });
-                                                });
-                                              },
-                                            );
-                                          },
-                                        ),
+                                        //             print(showHideHeaderList[0]);
+                                        //             print("SHEET : ${selectedBranch}, FILTER : ${headers[3]}, Cells Count : ${cells.length}, Department Count : ${departmentList.length}");
+                                        //           });
+                                        //         });
+                                        //       },
+                                        //     );
+                                        //   },
+                                        // ),
                                         //Set Filter
                                         IconButton(
                                           icon: Icon(Icons.filter_list_alt),
@@ -752,21 +841,40 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                                               builder: (context) {
                                                 return Expanded(
                                                   child: Container(
-                                                    width: MediaQuery.of(context).size.width / 3,
-                                                    child: StatefulBuilder(builder: (context, onState) {
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width /
+                                                            3,
+                                                    child: StatefulBuilder(
+                                                        builder:
+                                                            (context, onState) {
                                                       bool checkState = false;
                                                       return ListView.builder(
-                                                        itemCount: headerList.length,
-                                                        itemBuilder: (context, index) {
+                                                        itemCount:
+                                                            headerList.length,
+                                                        itemBuilder:
+                                                            (context, index) {
                                                           return ListTile(
-                                                            title: Text(headerList[index]),
+                                                            title: Text(
+                                                                headerList[
+                                                                    index]),
                                                             leading: Checkbox(
-                                                                value: showHideHeaderList[index][headerList[index]],
-                                                                onChanged: (status) {
+                                                                value: showHideHeaderList[
+                                                                        index][
+                                                                    headerList[
+                                                                        index]],
+                                                                onChanged:
+                                                                    (status) {
                                                                   onState(() {
-                                                                    showHideHeaderList[index][headerList[index]] = status!;
+                                                                    showHideHeaderList[
+                                                                            index]
+                                                                        [
+                                                                        headerList[
+                                                                            index]] = status!;
 
-                                                                    print("${headerList[index]} : ${showHideHeaderList[index][headerList[index]]}");
+                                                                    print(
+                                                                        "${headerList[index]} : ${showHideHeaderList[index][headerList[index]]}");
                                                                   });
                                                                 }),
                                                           );
@@ -776,7 +884,10 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                                                   ),
                                                 );
                                               },
-                                            ), title: "Filter Columns", topActions: [], bottomActions: []);
+                                            ),
+                                                title: "Filter Columns",
+                                                topActions: [],
+                                                bottomActions: []);
                                           },
                                         ),
                                         //Add ROW
@@ -824,7 +935,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                             ),
                           ),
                           columns: setColum(),
-                          rows: List<PlutoRow>.generate(cellsList.length, (index) {
+                          rows: List<PlutoRow>.generate(cellsList.length,
+                              (index) {
                             Map<String, PlutoCell> cells = {};
                             headerList.forEach((header) {
                               if (header == "No.") {
@@ -834,7 +946,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                                   value: "*****",
                                 );
                               } else {
-                                cells[header] = PlutoCell(value: cellsList[index][header]);
+                                cells[header] =
+                                    PlutoCell(value: cellsList[index][header]);
                               }
                             });
                             PlutoRow row = PlutoRow(cells: cells);
@@ -858,12 +971,15 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                         Center(
                           child: LoadingWidget(
                             title: "$processInfo",
-                            color: processInfo == "Processing..." ? Colors.green : Colors.red,
+                            color: processInfo == "Processing..."
+                                ? Colors.green
+                                : Colors.red,
                           ),
                         ),
                         processInfo == "Processing..."
                             ? Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
                                 child: Container(
                                   width: 25,
                                   height: 25,
@@ -874,7 +990,8 @@ class _LaptopAssetScreenState extends State<LaptopAssetScreen> with AutomaticKee
                                 ),
                               )
                             : Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
                                 child: Icon(
                                   Icons.info_outline,
                                   color: Colors.red,

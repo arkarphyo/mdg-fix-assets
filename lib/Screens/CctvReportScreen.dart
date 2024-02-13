@@ -111,7 +111,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
           hide: headerList[index] == "ID"
               ? showHideHeaderList[index][headerList[index]]
               : !showHideHeaderList[index][headerList[index]],
-          type: PlutoColumnType.date(format: "dd-MM-yyyy"),
+          type: PlutoColumnType.text(),
         );
       } else {
         return PlutoColumn(

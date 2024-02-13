@@ -1,3 +1,4 @@
+import 'dart:html';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:mdg_fixasset/HomeScreen.dart';
 import 'package:mdg_fixasset/Utils/CustomScrollBehavior.dart';
 
 void main() {
+  //window.document.onContextMenu.listen((evt) => evt.preventDefault());
   runApp(const MyApp());
 }
 

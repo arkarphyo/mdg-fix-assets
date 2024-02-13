@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:mdg_fixasset/Const/colors.dart';
 import 'package:mdg_fixasset/Const/images.dart';
 import 'package:mdg_fixasset/Screens/CctvReportScreen.dart';
-import 'package:mdg_fixasset/Screens/DashboardScreen.dart';
-import 'package:mdg_fixasset/Screens/GroundAssetScreen.dart';
+import 'package:mdg_fixasset/Screens/GroundAssetsScreen.dart';
+import 'package:mdg_fixasset/Screens/LaptopAssetScreen.dart';
 import 'package:mdg_fixasset/Screens/MobileServiceRecordScreen.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
 
@@ -39,7 +39,8 @@ class _HomeScreeState extends State<HomeScree> {
 
   PageController pageController = PageController();
   SideMenuController sideMenu = SideMenuController();
-  String googleSheetActiveUrl = "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?";
+  String googleSheetActiveUrl =
+      "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?";
   String param = "sheet=Tamwe Office  PC List&request_type=2";
   ApiService apiService = ApiService();
 
@@ -172,7 +173,9 @@ class _HomeScreeState extends State<HomeScree> {
             SideMenu(
               alwaysShowFooter: true,
               style: SideMenuStyle(
-                  displayMode: isMenuOpen ? SideMenuDisplayMode.open : SideMenuDisplayMode.compact,
+                  displayMode: isMenuOpen
+                      ? SideMenuDisplayMode.open
+                      : SideMenuDisplayMode.compact,
                   decoration: BoxDecoration(),
                   openSideMenuWidth: 200,
                   compactSideMenuWidth: 50,
@@ -231,6 +234,7 @@ class _HomeScreeState extends State<HomeScree> {
                   Expanded(
                     child: PageView(
                       controller: pageController,
+                      physics: NeverScrollableScrollPhysics(),
                       onPageChanged: (value) {
                         setState(() {
                           selectedMenuItem = value;
@@ -242,19 +246,21 @@ class _HomeScreeState extends State<HomeScree> {
                             child: Text('Dashboard (Coming Soon!)'),
                           ),
                         ),
+                        //GROUND Assets
                         InitializeContentWidget(
                           apiServiceData: apiService.getSheet(""),
                           contentWidget: (data) {
-                            return DashboardScreen(
+                            return GroundAssetScreen(
                               sheetList: data,
                             );
                           },
                         ),
+                        //Laptop Asset
                         InitializeContentWidget(
                           apiServiceData: apiService.getSheet(""),
                           contentWidget: (data) {
                             return LaptopAssetScreen(
-                              sheetList: data,
+                              sheetList: ["Laptop"],
                             );
                           },
                         ),
@@ -269,7 +275,8 @@ class _HomeScreeState extends State<HomeScree> {
                           ),
                         ),
                         InitializeContentWidget(
-                          apiServiceData: apiService.getSheet(ApiService.cctvUrl),
+                          apiServiceData:
+                              apiService.getSheet(ApiService.cctvUrl),
                           contentWidget: (data) {
                             return CctvReportScreen(
                               sheetList: data,
@@ -287,7 +294,8 @@ class _HomeScreeState extends State<HomeScree> {
                           ),
                         ),
                         InitializeContentWidget(
-                          apiServiceData: apiService.getSheet(ApiService.mobileService),
+                          apiServiceData:
+                              apiService.getSheet(ApiService.mobileService),
                           contentWidget: (data) {
                             return MobileServiceRecordScreen(
                               sheetList: data,
