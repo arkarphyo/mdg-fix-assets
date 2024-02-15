@@ -59,6 +59,8 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
   List<String> typeList = ["Desktop", "Laptop"];
   int sheetRowCount = 0;
 
+  late PlutoRow selectedRow;
+
   //Set Optional List Type
   List<String> setList(String listType) {
     switch (listType) {
@@ -81,35 +83,31 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
   List<PlutoColumn> setColum() {
     plutoColumns = List<PlutoColumn>.generate(headerList.length, (index) {
       _controllers[headerList[index]] = TextEditingController();
-      if (headerList[index] == "Action") {
+      if (headerList[index] == "DELETE" || headerList[index] == "EDIT") {
         return PlutoColumn(
-            width: 75,
-            minWidth: 45,
-            backgroundColor: Colors.black12,
-            textAlign: PlutoColumnTextAlign.center,
-            title: headerList[index],
-            field: headerList[index],
-            type: PlutoColumnType.text(),
-            renderer: (renderContext) {
-              return Row(
-                children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.delete,
-                      color: Colors.redAccent,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.edit,
-                      color: Colors.blue,
-                    ),
-                  ),
-                ],
-              );
-            });
+          width: 100,
+          minWidth: 45,
+          backgroundColor: Colors.black12,
+          textAlign: PlutoColumnTextAlign.center,
+          title: headerList[index],
+          field: headerList[index],
+          type: PlutoColumnType.text(),
+          renderer: (PlutoColumnRendererContext ctx) {
+            return Center(
+              child: TextButton(
+                  onPressed: () {
+                    // Handle button press
+
+                    print(
+                        'Button pressed in row ${ctx.rowIdx}, column ${ctx.column.title}');
+                    updateRow(stateManager.getRowByIdx(ctx.rowIdx));
+                  },
+                  child: ctx.column.title == "DELETE"
+                      ? Text("DELETE", style: TextStyle(color: Colors.red))
+                      : Text("EDIT", style: TextStyle(color: Colors.blue))),
+            );
+          },
+        );
       }
       if (headerList[index] == "No." || headerList[index] == "ID") {
         return PlutoColumn(
@@ -185,11 +183,13 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
   //Get HeadeValues
   Future<List<String>> getHeaderValues(String sheetName) async {
     headerList.clear();
+
     await apiService
         .getHeader(
             "https://script.google.com/macros/s/AKfycbwr1L7s80xL344tVZsYLq5oPnFMvVBqK9vLCy92m2R1GxW0Tj_fzTsvU8bwyZg7yo4JUg/exec?request_type=2&sheet=$sheetName")
         .then((headers) {
-      headerList.add("Action");
+      headerList.add("EDIT");
+      headerList.add("DELETE");
       for (var header in headers) {
         setState(() {
           headerList.add('$header');
@@ -478,7 +478,10 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
                         const SizedBox(height: 20),
                         ...row!.cells.entries.map((e) {
                           _controllers[e.key]!.text = e.value.value.toString();
-                          if (e.key.isNotEmpty && e.key != "No.") {
+                          if (e.key.isNotEmpty &&
+                              e.key != "No." &&
+                              e.key != "EDIT" &&
+                              e.key != "DELETE") {
                             return Padding(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 4, vertical: 0),
@@ -515,8 +518,11 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
                               ),
                             );
                           } else {
-                            return Text(
-                                'Row နံပါတ် (${e.value.value}) ကို Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.');
+                            return Visibility(
+                              visible: false,
+                              child: Text(
+                                  'Row နံပါတ် (${e.value.value}) ကို Edit ပြုလုပ်ရန်အတွက် Password လိုအပ်ပါသည်။.'),
+                            );
                           }
                         }).toList(),
                         const SizedBox(height: 20),
@@ -572,12 +578,12 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
           .fetchData(
               sheet: selectedBranch,
               requestType: "3",
-              row: (int.parse(value[headerList[0]]!.text) + 1).toString(),
+              row: (int.parse(value[headerList[1]]!.text) + 1).toString(),
               data: data.join(','))
           .then((response) {
         row!.cells.forEach((key, val) {
           stateManager.changeCellValue(
-            stateManager.currentRow!.cells[key]!,
+            row!.cells[key]!,
             value[key]!.text,
             force: true,
           );
@@ -812,13 +818,13 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
                           onRowSecondaryTap:
                               (PlutoGridOnRowSecondaryTapEvent event) async {},
                           onSelected: (PlutoGridOnSelectedEvent event) async {
-                            if (event.row != null) {
-                              if (event.cell!.column.field == "No.") {
-                                await updateRow(event.row);
-                              } else {
-                                await updateCell(event.cell);
-                              }
-                            }
+                            // if (event.row != null) {
+                            //   if (event.cell!.column.field == "No.") {
+                            //     await updateRow(event.row);
+                            //   } else {
+                            //     await updateCell(event.cell);
+                            //   }
+                            // }
                           },
                           createHeader: (stateEvent) {
                             return Padding(
@@ -998,6 +1004,9 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
                             for (var header in headerList) {
                               if (header == "No.") {
                                 cells[header] = PlutoCell(value: index + 1);
+                              } else if (header == "EDIT" ||
+                                  header == "DELETE") {
+                                cells[header] = PlutoCell(value: "$header");
                               } else if (header == "ID") {
                                 cells[header] = PlutoCell(
                                   value: "*****",

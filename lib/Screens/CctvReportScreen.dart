@@ -727,6 +727,11 @@ class _CctvReportScreenState extends State<CctvReportScreen>
     }
   }
 
+  //Delete Row
+  Future<void> deleteRow(PlutoRow? row) async {
+    stateManager.removeRows([row!]);
+  }
+
   //Export PDF
   void exportToPdf() async {
     var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
@@ -810,8 +815,10 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                           onChanged: (PlutoGridOnChangedEvent event) {},
                           onSelected: (PlutoGridOnSelectedEvent event) async {
                             if (event.row != null) {
-                              if (event.cell!.column.field == "No.") {
+                              if (event.cell!.column.field == "EDIT") {
                                 await updateRow(event.row);
+                              } else if (event.cell!.column.field == "DELETE") {
+                                await deleteRow(event.row);
                               } else {
                                 await updateCell(event.cell);
                               }
@@ -993,7 +1000,17 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                               (index) {
                             Map<String, PlutoCell> cells = {};
                             for (var header in headerList) {
-                              if (header == "No.") {
+                              if (header == "Delete") {
+                                //DELETE
+                                cells[header] = PlutoCell(
+                                  value: "Delete",
+                                );
+                              } else if (header == "Edit") {
+                                //UPDATE
+                                cells[header] = PlutoCell(
+                                  value: "Edit",
+                                );
+                              } else if (header == "No.") {
                                 cells[header] = PlutoCell(value: index + 1);
                               } else if (header == "ID") {
                                 cells[header] = PlutoCell(
