@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:mdg_fixasset/Const/colors.dart';
 import 'package:mdg_fixasset/Utils/ApiService.dart';
@@ -100,6 +101,13 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
 
                     print(
                         'Button pressed in row ${ctx.rowIdx}, column ${ctx.column.title}');
+                    if (ctx.column.title == "EDIT") {
+                      updateRow(stateManager.getRowByIdx(ctx.rowIdx));
+                    } else if (ctx.column.title == "DELETE") {
+                      deleteRow(ctx.stateManager.getRowByIdx(ctx.rowIdx));
+                    } else {
+                      updateCell(ctx.cell);
+                    }
                     updateRow(stateManager.getRowByIdx(ctx.rowIdx));
                   },
                   child: ctx.column.title == "DELETE"
@@ -736,6 +744,41 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
     }
   }
 
+  //Delete Row
+  Future<void> deleteRow(PlutoRow? row) async {
+    stateManager.setShowLoading(true);
+    var value = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          child: LayoutBuilder(
+            builder: (ctx, size) {
+              return Container(
+                padding: const EdgeInsets.all(15),
+                width: 400,
+                height: MediaQuery.sizeOf(context).height / 1.4,
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text("DELETE ROW ?"),
+                      Text("Do you want to delete this row?"),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   //Export PDF
   void exportToPdf() async {
     var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
@@ -816,7 +859,15 @@ class _GroundAssetScreenState extends State<GroundAssetScreen>
                           },
                           onChanged: (PlutoGridOnChangedEvent event) {},
                           onRowSecondaryTap:
-                              (PlutoGridOnRowSecondaryTapEvent event) async {},
+                              (PlutoGridOnRowSecondaryTapEvent event) async {
+                            if (event.row != null) {
+                              if (event.cell!.column.field == "EDIT") {
+                                await updateRow(event.row);
+                              } else if (event.cell!.column.field == "DELETE") {
+                                await deleteRow(event.row);
+                              }
+                            }
+                          },
                           onSelected: (PlutoGridOnSelectedEvent event) async {
                             // if (event.row != null) {
                             //   if (event.cell!.column.field == "No.") {
