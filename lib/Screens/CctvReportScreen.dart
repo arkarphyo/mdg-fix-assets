@@ -8,7 +8,7 @@ import 'package:file_saver/file_saver.dart';
 import 'package:mdg_fixasset/Utils/UtilService.dart';
 import 'package:mdg_fixasset/WIdgets/CustomDropDownSearch.dart';
 import 'package:mdg_fixasset/constant.dart';
-import 'package:pluto_grid_export/pluto_grid_export.dart' as pluto_grid_export;
+// import 'package:pluto_grid_export/pluto_grid_export.dart' as pluto_grid_export;
 import 'package:pluto_grid/pluto_grid.dart';
 
 import '../WIdgets/LoadingWidget.dart';
@@ -96,8 +96,8 @@ class _CctvReportScreenState extends State<CctvReportScreen>
             title: headerList[index],
             field: headerList[index],
             hide: headerList[index] == "ID"
-                ? showHideHeaderList[index][headerList[index]]
-                : !showHideHeaderList[index][headerList[index]],
+                ? showHideHeaderList[index][headerList[index]] ?? ""
+                : !showHideHeaderList[index][headerList[index]] ?? "",
             type: PlutoColumnType.text());
       } else if (headerList[index] == "Date" ||
           headerList[index] == "Finished Date") {
@@ -732,32 +732,32 @@ class _CctvReportScreenState extends State<CctvReportScreen>
     stateManager.removeRows([row!]);
   }
 
-  //Export PDF
-  void exportToPdf() async {
-    var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
-      title: selectedYear,
-      creator: "MDG-!T",
-      format: pluto_grid_export.PdfPageFormat.a4.landscape,
-    );
+  // //Export PDF
+  // void exportToPdf() async {
+  //   var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
+  //     title: selectedYear,
+  //     creator: "MDG-!T",
+  //     format: pluto_grid_export.PdfPageFormat.a4.landscape,
+  //   );
 
-    await pluto_grid_export.Printing.sharePdf(
-      bytes: await plutoGridPdfExport.export(stateManager),
-      filename: plutoGridPdfExport.getFilename(),
-    );
-  }
+  //   await pluto_grid_export.Printing.sharePdf(
+  //     bytes: await plutoGridPdfExport.export(stateManager),
+  //     filename: plutoGridPdfExport.getFilename(),
+  //   );
+  // }
 
-  //Export CSV
-  void exportToCsv() async {
-    String title = "pluto_grid_export";
+  // //Export CSV
+  // void exportToCsv() async {
+  //   String title = "pluto_grid_export";
 
-    var exported = const Utf8Encoder()
-        .convert(pluto_grid_export.PlutoGridExport.exportCSV(stateManager));
-    DateTime now = DateTime.now();
-    String dateTimeFormat = DateFormat('dd-MM-yyyy_hh:mm').format(now);
-    // use file_saver from pub.dev
-    await FileSaver.instance.saveFile(
-        name: "${title}_$dateTimeFormat", ext: "csv", bytes: exported);
-  }
+  //   var exported = const Utf8Encoder()
+  //       .convert(pluto_grid_export.PlutoGridExport.exportCSV(stateManager));
+  //   DateTime now = DateTime.now();
+  //   String dateTimeFormat = DateFormat('dd-MM-yyyy_hh:mm').format(now);
+  //   // use file_saver from pub.dev
+  //   await FileSaver.instance.saveFile(
+  //       name: "${title}_$dateTimeFormat", ext: "csv", bytes: exported);
+  // }
 
   //INITIALIZE
   @override
@@ -952,7 +952,7 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                                       //ExportCSV
                                       IconButton(
                                         onPressed: () {
-                                          exportToCsv();
+                                          // exportToCsv();
                                         },
                                         icon: const Icon(Icons.download),
                                       ),
@@ -1012,6 +1012,17 @@ class _CctvReportScreenState extends State<CctvReportScreen>
                                 );
                               } else if (header == "No.") {
                                 cells[header] = PlutoCell(value: index + 1);
+                              } else if (header == "Date" ||
+                                  header == "Finished Date") {
+                                try {
+                                  String dateString = cellsList[index][header];
+                                  DateTime date = DateTime.parse(dateString);
+                                  String formateDate =
+                                      DateFormat('dd/MM/yyyy').format(date);
+                                  cells[header] = PlutoCell(value: formateDate);
+                                } catch (e) {
+                                  cells[header] = PlutoCell(value: "?");
+                                }
                               } else if (header == "ID") {
                                 cells[header] = PlutoCell(
                                   value: "*****",

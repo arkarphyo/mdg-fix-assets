@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:mdg_fixasset/Const/colors.dart';
 import 'package:mdg_fixasset/Const/images.dart';
 import 'package:mdg_fixasset/Screens/CctvReportScreen.dart';
+import 'package:mdg_fixasset/Screens/DesktopAssetScreen.dart';
 import 'package:mdg_fixasset/Screens/GroundAssetsScreen.dart';
 import 'package:mdg_fixasset/Screens/LaptopAssetScreen.dart';
 import 'package:mdg_fixasset/Screens/MobileServiceRecordScreen.dart';
@@ -19,7 +20,7 @@ class HomeScree extends StatefulWidget {
 }
 
 class _HomeScreeState extends State<HomeScree> {
-  bool isMenuOpen = false;
+  bool isMenuOpen = true;
   int selectedMenuItem = 0;
   GlobalKey<ScaffoldState> _key = GlobalKey();
 
@@ -86,6 +87,20 @@ class _HomeScreeState extends State<HomeScree> {
           sideMenu.changePage(index);
         },
         icon: Icon(Icons.inbox),
+      ),
+      SideMenuItem(
+        title: 'Monitor',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.monitor),
+      ),
+      SideMenuItem(
+        title: 'Desktop',
+        onTap: (index, _) {
+          sideMenu.changePage(index);
+        },
+        icon: Icon(Icons.desktop_windows_rounded),
       ),
       SideMenuItem(
         title: 'Laptops',
@@ -252,6 +267,24 @@ class _HomeScreeState extends State<HomeScree> {
                           contentWidget: (data) {
                             return GroundAssetScreen(
                               sheetList: data,
+                            );
+                          },
+                        ),
+                        //Desktop Asset
+                        InitializeContentWidget(
+                          apiServiceData: apiService.getSheet(""),
+                          contentWidget: (data) {
+                            return DesktopAssetScreen(
+                              sheetList: ["Monitor"],
+                            );
+                          },
+                        ),
+                        //Desktop Asset
+                        InitializeContentWidget(
+                          apiServiceData: apiService.getSheet(""),
+                          contentWidget: (data) {
+                            return DesktopAssetScreen(
+                              sheetList: ["Desktop"],
                             );
                           },
                         ),

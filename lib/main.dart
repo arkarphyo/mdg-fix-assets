@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mdg_fixasset/Const/colors.dart';
 import 'package:mdg_fixasset/HomeScreen.dart';
+import 'package:mdg_fixasset/Screens/LoginScreen.dart';
 import 'package:mdg_fixasset/Utils/CustomScrollBehavior.dart';
 
 void main() {
@@ -41,7 +42,7 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colour.blue),
         useMaterial3: true,
       ),
-      home: const HomeScree(),
+      home: const LoginScreen(),
     );
   }
 }
